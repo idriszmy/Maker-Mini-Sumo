@@ -78,6 +78,22 @@ Firmware mesti mengekalkan failsafe: kedua-dua motor berhenti apabila salah
 satu signal RC hilang, lebih lama daripada 30 ms, atau mempunyai pulse width
 di luar julat sah `750-2250 us`.
 
+### RC deadband
+
+Deadband `0.1` digunakan pada kedua-dua channel dan output di-rescale selepas
+deadband:
+
+```text
+Input -0.10 hingga +0.10 → Output 0
+Input +0.10 hingga +1.00 → Output 0 hingga +1.00
+Input -0.10 hingga -1.00 → Output 0 hingga -1.00
+```
+
+Ini mengelakkan motor PWM melompat terus ke sekitar 25 apabila stick baru
+keluar daripada deadband. Alignment direction menggunakan tanda output
+throttle selepas rescale, supaya forward dan backward trim terus aktif selepas
+deadband.
+
 ## Physical alignment
 
 ### DIP modes
