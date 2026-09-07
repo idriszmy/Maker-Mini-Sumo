@@ -48,6 +48,15 @@ constexpr uint8_t EEPROM_VERSION = 1;
 constexpr unsigned long SAVE_HOLD_MS = 2000UL;
 constexpr unsigned long SAVE_FLASH_MS = 1000UL;
 
+// Short buzzer patterns keep RC interruptions brief.
+constexpr int BUZZER_POWER_NOTE_1 = NOTE_C5;
+constexpr int BUZZER_POWER_NOTE_2 = NOTE_G5;
+constexpr int BUZZER_FORWARD_NOTE = NOTE_G5;
+constexpr int BUZZER_BACKWARD_NOTE = NOTE_C5;
+constexpr int BUZZER_SAVE_NOTE_1 = NOTE_E5;
+constexpr int BUZZER_SAVE_NOTE_2 = NOTE_G5;
+constexpr int BUZZER_SAVE_NOTE_3 = NOTE_C6;
+
 int8_t forwardTrim = 0;
 int8_t backwardTrim = 0;
 
@@ -55,6 +64,7 @@ bool startWasPressed = false;
 bool saveCompletedForThisPress = false;
 unsigned long startPressedAt = 0;
 unsigned long saveFlashStartedAt = 0;
+uint8_t previousMode = 0xFF;
 
 constexpr uint8_t SERIAL_BUFFER_SIZE = 40;
 char serialBuffer[SERIAL_BUFFER_SIZE];
@@ -71,6 +81,9 @@ void processSerial();
 void handleSerialCommand(char *command);
 void printConfig();
 void saveTrim(char direction, int8_t trim);
+void updateModeSound(uint8_t mode);
+void playPowerOnSound();
+void playSaveSound();
 
 void setup()
 {
@@ -83,6 +96,7 @@ void setup()
   loadAlignment();
   MakerSumo.stop();
   digitalWrite(LED, LOW);
+  playPowerOnSound();
 }
 
 void loop()
@@ -90,6 +104,7 @@ void loop()
   processSerial();
 
   uint8_t mode = MakerSumo.readDipSwitch();
+  updateModeSound(mode);
   int8_t liveTrim = readPotTrim();
 
   // Stop while START is held and while showing the save confirmation.
@@ -230,6 +245,43 @@ void saveTrim(char direction, int8_t trim)
   EEPROM.update(EEPROM_BACKWARD_TRIM_ADDRESS, (uint8_t)backwardTrim);
   EEPROM.update(EEPROM_VERSION_ADDRESS, EEPROM_VERSION);
   EEPROM.update(EEPROM_MAGIC_ADDRESS, EEPROM_MAGIC);
+  playSaveSound();
+}
+
+void updateModeSound(uint8_t mode)
+{
+  if (mode == previousMode) {
+    return;
+  }
+
+  previousMode = mode;
+
+  if (mode == MODE_FORWARD_ALIGNMENT) {
+    // One beep for forward alignment mode (LHL).
+    MakerSumo.playTone(BUZZER_FORWARD_NOTE, 120);
+  }
+  else if (mode == MODE_BACKWARD_ALIGNMENT) {
+    // Two beeps for backward alignment mode (HLH).
+    MakerSumo.playTone(BUZZER_BACKWARD_NOTE, 90);
+    delay(70);
+    MakerSumo.playTone(BUZZER_BACKWARD_NOTE, 90);
+  }
+}
+
+void playPowerOnSound()
+{
+  MakerSumo.playTone(BUZZER_POWER_NOTE_1, 80);
+  delay(40);
+  MakerSumo.playTone(BUZZER_POWER_NOTE_2, 110);
+}
+
+void playSaveSound()
+{
+  MakerSumo.playTone(BUZZER_SAVE_NOTE_1, 60);
+  delay(30);
+  MakerSumo.playTone(BUZZER_SAVE_NOTE_2, 60);
+  delay(30);
+  MakerSumo.playTone(BUZZER_SAVE_NOTE_3, 120);
 }
 
 bool handleSaveButton(uint8_t mode, int8_t liveTrim)
@@ -353,6 +405,8 @@ void handleSerialCommand(char *command)
       return;
     }
 
+    // Prevent the robot from moving while save confirmation is sounding.
+    MakerSumo.stop();
     saveTrim(command[5], (int8_t)value);
     Serial.print(F("OK SAVED "));
     Serial.print(command[5]);
