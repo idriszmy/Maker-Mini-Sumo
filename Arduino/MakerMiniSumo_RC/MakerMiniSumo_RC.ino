@@ -12,6 +12,7 @@
  ******************************************************************************/
 
 #include <EEPROM.h>
+#include <avr/interrupt.h>
 #include "CytronMakerSumo.h"
 
 // RC receiver pins.
@@ -29,6 +30,10 @@ constexpr int RC_VALID_MIN_US = 750;
 constexpr int RC_VALID_MAX_US = 2250;
 constexpr unsigned long RC_TIMEOUT_US = 30000UL;
 constexpr float RC_DEADBAND = 0.1f;
+
+// GPIO1=A2=PC2/PCINT10 and GPIO2=A3=PC3/PCINT11 on ATmega328P.
+constexpr uint8_t RC_SPEED_PORT_BIT = PC2;
+constexpr uint8_t RC_STEERING_PORT_BIT = PC3;
 
 constexpr int SPEED_MAX = 255;
 
@@ -60,6 +65,15 @@ constexpr int BUZZER_SAVE_NOTE_3 = NOTE_C6;
 int8_t forwardTrim = 0;
 int8_t backwardTrim = 0;
 
+// Pulse data is captured by the Port C pin-change interrupt.
+volatile uint32_t rcSpeedRiseAt = 0;
+volatile uint32_t rcSteeringRiseAt = 0;
+volatile uint32_t rcSpeedLastPulseAt = 0;
+volatile uint32_t rcSteeringLastPulseAt = 0;
+volatile uint16_t rcSpeedPulseWidth = 0;
+volatile uint16_t rcSteeringPulseWidth = 0;
+volatile uint8_t rcLastPortState = 0;
+
 bool startWasPressed = false;
 bool saveCompletedForThisPress = false;
 unsigned long startPressedAt = 0;
@@ -70,6 +84,7 @@ constexpr uint8_t SERIAL_BUFFER_SIZE = 40;
 char serialBuffer[SERIAL_BUFFER_SIZE];
 uint8_t serialBufferLength = 0;
 
+void beginRcCapture();
 bool readRcChannel(uint8_t pin, float &value);
 int8_t readPotTrim();
 void applyTrim(int &leftSpeed, int &rightSpeed, int8_t trim);
@@ -85,6 +100,41 @@ void updateModeSound(uint8_t mode);
 void playPowerOnSound();
 void playSaveSound();
 
+ISR(PCINT1_vect)
+{
+  uint8_t portState = PINC;
+  uint8_t changedPins = portState ^ rcLastPortState;
+  uint32_t now = micros();
+
+  if (changedPins & _BV(RC_SPEED_PORT_BIT)) {
+    if (portState & _BV(RC_SPEED_PORT_BIT)) {
+      rcSpeedRiseAt = now;
+    }
+    else {
+      uint32_t pulseWidth = now - rcSpeedRiseAt;
+      if (pulseWidth <= UINT16_MAX) {
+        rcSpeedPulseWidth = (uint16_t)pulseWidth;
+        rcSpeedLastPulseAt = now;
+      }
+    }
+  }
+
+  if (changedPins & _BV(RC_STEERING_PORT_BIT)) {
+    if (portState & _BV(RC_STEERING_PORT_BIT)) {
+      rcSteeringRiseAt = now;
+    }
+    else {
+      uint32_t pulseWidth = now - rcSteeringRiseAt;
+      if (pulseWidth <= UINT16_MAX) {
+        rcSteeringPulseWidth = (uint16_t)pulseWidth;
+        rcSteeringLastPulseAt = now;
+      }
+    }
+  }
+
+  rcLastPortState = portState;
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -92,6 +142,7 @@ void setup()
 
   pinMode(RC_SPEED, INPUT_PULLUP);
   pinMode(RC_STEERING, INPUT_PULLUP);
+  beginRcCapture();
 
   loadAlignment();
   MakerSumo.stop();
@@ -147,11 +198,47 @@ void loop()
   updateLed(mode, leftSpeed != 0 || rightSpeed != 0);
 }
 
+void beginRcCapture()
+{
+  uint32_t now = micros();
+
+  noInterrupts();
+  rcLastPortState = PINC;
+
+  // If setup begins during a HIGH pulse, measure from this point only.
+  if (rcLastPortState & _BV(RC_SPEED_PORT_BIT)) {
+    rcSpeedRiseAt = now;
+  }
+  if (rcLastPortState & _BV(RC_STEERING_PORT_BIT)) {
+    rcSteeringRiseAt = now;
+  }
+
+  PCIFR |= _BV(PCIF1);
+  PCMSK1 |= _BV(PCINT10) | _BV(PCINT11);
+  PCICR |= _BV(PCIE1);
+  interrupts();
+}
+
 bool readRcChannel(uint8_t pin, float &value)
 {
-  unsigned long pulseWidth = pulseIn(pin, HIGH, RC_TIMEOUT_US);
+  uint16_t pulseWidth;
+  uint32_t lastPulseAt;
 
-  if (pulseWidth < RC_VALID_MIN_US || pulseWidth > RC_VALID_MAX_US) {
+  // A 32-bit value is not read atomically on the 8-bit ATmega328P.
+  noInterrupts();
+  if (pin == RC_SPEED) {
+    pulseWidth = rcSpeedPulseWidth;
+    lastPulseAt = rcSpeedLastPulseAt;
+  }
+  else {
+    pulseWidth = rcSteeringPulseWidth;
+    lastPulseAt = rcSteeringLastPulseAt;
+  }
+  interrupts();
+
+  uint32_t now = micros();
+  if (lastPulseAt == 0 || now - lastPulseAt > RC_TIMEOUT_US ||
+      pulseWidth < RC_VALID_MIN_US || pulseWidth > RC_VALID_MAX_US) {
     return false;
   }
 
