@@ -182,12 +182,12 @@ void loop()
   leftSpeed = constrain(leftSpeed, -SPEED_MAX, SPEED_MAX);
   rightSpeed = constrain(rightSpeed, -SPEED_MAX, SPEED_MAX);
 
-  // Direction is based on throttle, before steering is mixed into the motors.
-  if (speedPercent > RC_DEADBAND) {
+  // Direction is based on the rescaled throttle, before steering mixing.
+  if (speedPercent > 0.0f) {
     int8_t trim = (mode == MODE_FORWARD_ALIGNMENT) ? liveTrim : forwardTrim;
     applyTrim(leftSpeed, rightSpeed, trim);
   }
-  else if (speedPercent < -RC_DEADBAND) {
+  else if (speedPercent < 0.0f) {
     int8_t trim = (mode == MODE_BACKWARD_ALIGNMENT) ? liveTrim : backwardTrim;
     applyTrim(leftSpeed, rightSpeed, trim);
   }
@@ -246,8 +246,14 @@ bool readRcChannel(uint8_t pin, float &value)
           (float)(RC_RANGE_US / 2);
   value = constrain(value, -1.0f, 1.0f);
 
-  if (value > -RC_DEADBAND && value < RC_DEADBAND) {
+  if (value >= -RC_DEADBAND && value <= RC_DEADBAND) {
     value = 0.0f;
+  }
+  else if (value > 0.0f) {
+    value = (value - RC_DEADBAND) / (1.0f - RC_DEADBAND);
+  }
+  else {
+    value = (value + RC_DEADBAND) / (1.0f - RC_DEADBAND);
   }
 
   return true;
