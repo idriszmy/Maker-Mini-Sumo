@@ -53,8 +53,8 @@ the RC remote while making adjustments.
 4. Drive the robot forward using the RC remote.
 5. Adjust the potentiometer until the robot travels straight:
    - Centre: left motor 100%, right motor 100%.
-   - Turn towards the left: reduce the left motor to a minimum of 75%.
-   - Turn towards the right: reduce the right motor to a minimum of 75%.
+   - Turn the potentiometer left: reduce the left motor to a minimum of 75%.
+   - Turn the potentiometer right: reduce the right motor to a minimum of 75%.
 6. Repeat the forward movement and adjustment until the alignment is
    satisfactory.
 7. Release the throttle to neutral, then press and hold START for 2 seconds.
@@ -72,8 +72,8 @@ movement continues to use the backward alignment stored in EEPROM.
 4. Drive the robot backward using the RC remote.
 5. Adjust the potentiometer until the robot travels straight:
    - Centre: left motor 100%, right motor 100%.
-   - Turn towards the left: reduce the left motor to a minimum of 75%.
-   - Turn towards the right: reduce the right motor to a minimum of 75%.
+   - Turn the potentiometer left: reduce the left motor to a minimum of 75%.
+   - Turn the potentiometer right: reduce the right motor to a minimum of 75%.
 6. Repeat the backward movement and adjustment until the alignment is
    satisfactory.
 7. Release the throttle to neutral, then press and hold START for 2 seconds.
