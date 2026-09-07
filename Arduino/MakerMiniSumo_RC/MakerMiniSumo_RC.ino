@@ -257,10 +257,13 @@ void updateModeSound(uint8_t mode)
   previousMode = mode;
 
   if (mode == MODE_FORWARD_ALIGNMENT) {
+    // Stop before sounding a mode change; the previous PWM may still be active.
+    MakerSumo.stop();
     // One beep for forward alignment mode (LHL).
     MakerSumo.playTone(BUZZER_FORWARD_NOTE, 120);
   }
   else if (mode == MODE_BACKWARD_ALIGNMENT) {
+    MakerSumo.stop();
     // Two beeps for backward alignment mode (HLH).
     MakerSumo.playTone(BUZZER_BACKWARD_NOTE, 90);
     delay(70);
