@@ -3,6 +3,12 @@
 Firmware RC dan Web Serial configurator untuk Cytron Maker Mini Sumo
 Controller.
 
+## Open WebUI
+
+[Open Maker Mini Sumo Web Serial Configurator](https://idriszmy.github.io/Maker-Mini-Sumo/)
+
+Gunakan Chrome atau Edge pada komputer yang disambungkan ke board melalui USB.
+
 ## Struktur projek
 
 - `Arduino/MakerMiniSumo_RC/` — firmware Arduino untuk kawalan RC dan motor alignment.
