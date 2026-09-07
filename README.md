@@ -26,7 +26,7 @@ Firmware semasa menyediakan:
 - Failsafe apabila signal RC hilang.
 - Forward dan backward motor alignment yang berasingan.
 - Live alignment menggunakan DIP switch dan potentiometer.
-- Simpanan alignment dalam EEPROM.
+- Simpanan alignment dalam EEPROM.\n- Buzzer feedback untuk power-on, alignment mode dan EEPROM save.
 
 ## Status Web Configurator
 
