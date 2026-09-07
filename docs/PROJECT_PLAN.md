@@ -63,8 +63,20 @@ Arduino Uno compatible. RC receiver menggunakan:
 - `GPIO1` untuk throttle/speed.
 - `GPIO2` untuk steering.
 
+Kedua-dua signal RC ditangkap menggunakan pin-change interrupt `PCINT1`:
+
+- `GPIO1 / A2 / PCINT10` untuk throttle/speed.
+- `GPIO2 / A3 / PCINT11` untuk steering.
+- ISR merekod masa rising edge, pulse width pada falling edge dan masa pulse
+  terakhir.
+- Main loop membaca snapshot atomic supaya data 16-bit dan 32-bit tidak berubah
+  di tengah bacaan pada ATmega328P 8-bit.
+- Tiada penggunaan `pulseIn()`, jadi loop tidak menunggu pulse RC secara
+  blocking.
+
 Firmware mesti mengekalkan failsafe: kedua-dua motor berhenti apabila salah
-satu signal RC hilang atau tidak sah.
+satu signal RC hilang, lebih lama daripada 30 ms, atau mempunyai pulse width
+di luar julat sah `750-2250 us`.
 
 ## Physical alignment
 
