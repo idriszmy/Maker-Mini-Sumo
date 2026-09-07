@@ -22,7 +22,7 @@ Board sasaran: Maker Mini Sumo Controller (ATmega328P / Arduino Uno compatible).
 
 Firmware semasa menyediakan:
 
-- Kawalan RC throttle dan steering.
+- Kawalan RC throttle dan steering menggunakan pin-change interrupt.
 - Failsafe apabila signal RC hilang.
 - Forward dan backward motor alignment yang berasingan.
 - Live alignment menggunakan DIP switch dan potentiometer.
