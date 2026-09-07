@@ -48,10 +48,10 @@ Fail di dalam repository ialah sumber utama. Sketch boleh dibuka terus melalui
 | RC firmware | Siap dan lulus compile untuk Arduino Uno |
 | Physical forward alignment | Siap dalam firmware |
 | Physical backward alignment | Siap dalam firmware |
-| EEPROM alignment storage | Siap dalam firmware |
+| EEPROM alignment storage | Siap dalam firmware |\n| Buzzer feedback | Siap dalam firmware |
 | Web Serial firmware protocol | Siap, menunggu ujian board fizikal |
 | WebUI | Versi pertama siap, menunggu ujian board fizikal |
-| GitHub Pages deployment | Dirancang, belum diaktifkan |
+| GitHub Pages deployment | Siap |
 | Ujian pada robot fizikal | Belum dibuat |
 | Pindah working copy ke `Documents/GitHub` | Siap dalam versi ini |
 
@@ -73,8 +73,8 @@ satu signal RC hilang atau tidak sah.
 | DIP (SW1, SW2, SW3) | Nilai | Fungsi | Corak LED |
 |---|---:|---|---|
 | `LLL` / OFF-OFF-OFF | 0 | Normal RC | Status pergerakan |
-| `LHL` / OFF-ON-OFF | 2 | Forward alignment | 1 flash berulang |
-| `HLH` / ON-OFF-ON | 5 | Backward alignment | 2 flash berulang |
+| `LHL` / OFF-ON-OFF | 2 | Forward alignment | 1 flash dan 1 beep ketika masuk mode |
+| `HLH` / ON-OFF-ON | 5 | Backward alignment | 2 flash dan 2 beep ketika masuk mode |
 
 Semua kombinasi DIP selain dua alignment mode menggunakan nilai alignment
 daripada EEPROM.
@@ -156,7 +156,7 @@ Event slider:
 - `input`: kemas kini visual sahaja semasa slider digerakkan.
 - `change`: hantar nilai selepas slider dilepaskan atau disahkan melalui
   keyboard/touch.
-- WebUI hanya memaparkan `Saved` selepas firmware memberi respons berjaya.
+- Firmware menghentikan motor seketika dan memainkan bunyi confirmation apabila\n  menerima arahan save daripada WebUI.\n- WebUI hanya memaparkan `Saved` selepas firmware memberi respons berjaya.
 
 ## Serial protocol
 
