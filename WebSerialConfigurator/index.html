@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#101416">
+    <meta name="description" content="Motor alignment configurator for Maker Mini Sumo">
+    <title>Maker Mini Sumo Configurator</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="masthead">
+        <div>
+          <p class="eyebrow">Cytron Maker Mini Sumo</p>
+          <h1>Motor Alignment</h1>
+          <p class="intro">Balance forward and reverse motor speed over USB serial.</p>
+        </div>
+        <div class="connection-badge" id="connectionBadge" data-state="offline">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="connectionText">Disconnected</span>
+        </div>
+      </header>
+
+      <section class="connection-panel" aria-labelledby="connectionHeading">
+        <div class="section-heading">
+          <span class="step-number">01</span>
+          <div>
+            <h2 id="connectionHeading">Connect robot</h2>
+            <p>Use Chrome or Edge desktop. Close Arduino Serial Monitor first.</p>
+          </div>
+        </div>
+
+        <div class="connection-controls">
+          <label class="field-label" for="portSelect">Serial port</label>
+          <div class="control-row">
+            <select id="portSelect" aria-describedby="portHelp">
+              <option value="new">Select new port…</option>
+            </select>
+            <button class="button button-secondary" id="refreshButton" type="button">
+              Refresh
+            </button>
+            <button class="button button-primary" id="connectButton" type="button">
+              Connect
+            </button>
+          </div>
+          <p class="field-help" id="portHelp">Previously approved ports appear here after refresh.</p>
+        </div>
+
+        <div class="notice" id="browserNotice" hidden>
+          Web Serial is unavailable in this browser. Open this page in Chrome or Edge desktop.
+        </div>
+      </section>
+
+      <section class="alignment-section" aria-labelledby="alignmentHeading">
+        <div class="section-heading">
+          <span class="step-number">02</span>
+          <div>
+            <h2 id="alignmentHeading">Align motor speed</h2>
+            <p>Move the robot with its RC remote, then release a slider to save.</p>
+          </div>
+        </div>
+
+        <div class="alignment-grid">
+          <article class="alignment-card" data-direction="forward">
+            <div class="card-heading">
+              <div class="direction-icon" aria-hidden="true">↑</div>
+              <div>
+                <p class="card-kicker">Forward</p>
+                <h3>Forward alignment</h3>
+              </div>
+              <span class="save-state" id="forwardSaveState">Not connected</span>
+            </div>
+
+            <div class="motor-readouts" aria-live="polite">
+              <div>
+                <span class="motor-label">Left motor</span>
+                <strong id="forwardLeftSpeed">100%</strong>
+              </div>
+              <div class="right-readout">
+                <span class="motor-label">Right motor</span>
+                <strong id="forwardRightSpeed">100%</strong>
+              </div>
+            </div>
+
+            <div class="slider-wrap">
+              <div class="slider-centre" aria-hidden="true"></div>
+              <input id="forwardSlider" type="range" min="-25" max="25" value="0" step="1" disabled
+                aria-label="Forward motor alignment">
+            </div>
+            <div class="slider-labels" aria-hidden="true">
+              <span>Reduce left</span>
+              <span>Centre</span>
+              <span>Reduce right</span>
+            </div>
+          </article>
+
+          <article class="alignment-card" data-direction="backward">
+            <div class="card-heading">
+              <div class="direction-icon" aria-hidden="true">↓</div>
+              <div>
+                <p class="card-kicker">Reverse</p>
+                <h3>Backward alignment</h3>
+              </div>
+              <span class="save-state" id="backwardSaveState">Not connected</span>
+            </div>
+
+            <div class="motor-readouts" aria-live="polite">
+              <div>
+                <span class="motor-label">Left motor</span>
+                <strong id="backwardLeftSpeed">100%</strong>
+              </div>
+              <div class="right-readout">
+                <span class="motor-label">Right motor</span>
+                <strong id="backwardRightSpeed">100%</strong>
+              </div>
+            </div>
+
+            <div class="slider-wrap">
+              <div class="slider-centre" aria-hidden="true"></div>
+              <input id="backwardSlider" type="range" min="-25" max="25" value="0" step="1" disabled
+                aria-label="Backward motor alignment">
+            </div>
+            <div class="slider-labels" aria-hidden="true">
+              <span>Reduce left</span>
+              <span>Centre</span>
+              <span>Reduce right</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <footer class="status-bar" aria-live="polite">
+        <span class="status-label">System</span>
+        <span id="systemMessage">Ready to connect.</span>
+      </footer>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

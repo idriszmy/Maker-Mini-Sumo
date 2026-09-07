@@ -5,8 +5,9 @@ alignment pada Maker Mini Sumo melalui USB serial.
 
 ## Status
 
-Belum dilaksanakan. Folder ini disediakan untuk pembangunan local dan
-deployment prototaip melalui GitHub Pages.
+Versi pertama telah dilaksanakan menggunakan HTML, CSS dan JavaScript biasa.
+Ia boleh digunakan dengan mock data atau disambungkan kepada firmware melalui
+Web Serial dalam Chrome/Edge desktop.
 
 Spesifikasi rasmi projek berada di
 [`../docs/PROJECT_PLAN.md`](../docs/PROJECT_PLAN.md).
@@ -21,5 +22,4 @@ WebSerialConfigurator/
 └── README.md
 ```
 
-Versi pertama akan menggunakan HTML, CSS dan JavaScript biasa tanpa framework
-atau build dependency.
+Tiada framework atau build dependency diperlukan.

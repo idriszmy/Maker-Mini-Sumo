@@ -49,11 +49,11 @@ Fail di dalam repository ialah sumber utama. Sketch boleh dibuka terus melalui
 | Physical forward alignment | Siap dalam firmware |
 | Physical backward alignment | Siap dalam firmware |
 | EEPROM alignment storage | Siap dalam firmware |
-| Web Serial firmware protocol | Dirancang, belum dilaksanakan |
-| WebUI | Dirancang, belum dilaksanakan |
+| Web Serial firmware protocol | Siap, menunggu ujian board fizikal |
+| WebUI | Versi pertama siap, menunggu ujian board fizikal |
 | GitHub Pages deployment | Dirancang, belum diaktifkan |
 | Ujian pada robot fizikal | Belum dibuat |
-| Pindah working copy ke `Documents/GitHub` | Belum dibuat |
+| Pindah working copy ke `Documents/GitHub` | Siap dalam versi ini |
 
 ## RC firmware
 
@@ -158,7 +158,7 @@ Event slider:
   keyboard/touch.
 - WebUI hanya memaparkan `Saved` selepas firmware memberi respons berjaya.
 
-## Serial protocol proposal
+## Serial protocol
 
 Versi pertama menggunakan arahan teks newline-delimited supaya ringan dan
 mudah diuji melalui Serial Monitor.
@@ -203,14 +203,11 @@ folder tersebut ke GitHub Pages.
 
 ## Milestone seterusnya
 
-1. Pindahkan working copy repository ke `Documents/GitHub/Maker-Mini-Sumo` dan
-   buka lokasi itu sebagai Codex project.
-2. Tambah parser protokol Web Serial kepada firmware tanpa mengubah RC control.
-3. Compile firmware dan uji Serial Monitor.
-4. Bina connection UI dan mock data local.
-5. Sambungkan WebUI kepada board sebenar.
-6. Uji read/save EEPROM dan reconnect.
-7. Aktifkan deployment GitHub Pages.
+1. Buka `Documents/GitHub/Maker-Mini-Sumo` sebagai Codex project.
+2. Upload firmware terkini dan uji Serial Monitor pada board sebenar.
+3. Sambungkan WebUI kepada board sebenar.
+4. Uji read/save EEPROM dan reconnect.
+5. Aktifkan deployment GitHub Pages.
 
 ## Perkara yang belum disahkan
 

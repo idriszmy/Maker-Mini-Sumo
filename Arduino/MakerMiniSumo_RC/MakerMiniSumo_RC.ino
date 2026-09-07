@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Ikedo Mini V2 - RC Only
+ * Maker Mini Sumo - RC Only
  *
  * Connections:
  * - RC throttle/speed  <-> GPIO1
@@ -56,6 +56,10 @@ bool saveCompletedForThisPress = false;
 unsigned long startPressedAt = 0;
 unsigned long saveFlashStartedAt = 0;
 
+constexpr uint8_t SERIAL_BUFFER_SIZE = 40;
+char serialBuffer[SERIAL_BUFFER_SIZE];
+uint8_t serialBufferLength = 0;
+
 bool readRcChannel(uint8_t pin, float &value);
 int8_t readPotTrim();
 void applyTrim(int &leftSpeed, int &rightSpeed, int8_t trim);
@@ -63,6 +67,10 @@ void loadAlignment();
 void saveAlignment(uint8_t mode, int8_t trim);
 bool handleSaveButton(uint8_t mode, int8_t liveTrim);
 void updateLed(uint8_t mode, bool motorsMoving);
+void processSerial();
+void handleSerialCommand(char *command);
+void printConfig();
+void saveTrim(char direction, int8_t trim);
 
 void setup()
 {
@@ -79,6 +87,8 @@ void setup()
 
 void loop()
 {
+  processSerial();
+
   uint8_t mode = MakerSumo.readDipSwitch();
   int8_t liveTrim = readPotTrim();
 
@@ -196,10 +206,23 @@ void loadAlignment()
 void saveAlignment(uint8_t mode, int8_t trim)
 {
   if (mode == MODE_FORWARD_ALIGNMENT) {
-    forwardTrim = trim;
+    saveTrim('F', trim);
   }
   else if (mode == MODE_BACKWARD_ALIGNMENT) {
+    saveTrim('B', trim);
+  }
+}
+
+void saveTrim(char direction, int8_t trim)
+{
+  if (direction == 'F') {
+    forwardTrim = trim;
+  }
+  else if (direction == 'B') {
     backwardTrim = trim;
+  }
+  else {
+    return;
   }
 
   // Write both trims so the untouched direction has a known default value.
@@ -273,4 +296,78 @@ void updateLed(uint8_t mode, bool motorsMoving)
   else {
     digitalWrite(LED, motorsMoving ? HIGH : LOW);
   }
+}
+
+void processSerial()
+{
+  while (Serial.available() > 0) {
+    char incoming = (char)Serial.read();
+
+    if (incoming == '\r') {
+      continue;
+    }
+
+    if (incoming == '\n') {
+      serialBuffer[serialBufferLength] = '\0';
+
+      if (serialBufferLength > 0) {
+        handleSerialCommand(serialBuffer);
+      }
+
+      serialBufferLength = 0;
+      continue;
+    }
+
+    if (serialBufferLength < SERIAL_BUFFER_SIZE - 1) {
+      serialBuffer[serialBufferLength++] = incoming;
+    }
+    else {
+      serialBufferLength = 0;
+      Serial.println(F("ERROR COMMAND_TOO_LONG"));
+    }
+  }
+}
+
+void handleSerialCommand(char *command)
+{
+  if (strcmp(command, "HELLO") == 0) {
+    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO VERSION=1"));
+    return;
+  }
+
+  if (strcmp(command, "GET CONFIG") == 0) {
+    printConfig();
+    return;
+  }
+
+  if (strncmp(command, "SAVE ", 5) == 0 &&
+      (command[5] == 'F' || command[5] == 'B') &&
+      command[6] == ' ') {
+    char *valueText = command + 7;
+    char *endText;
+    long value = strtol(valueText, &endText, 10);
+
+    if (*valueText == '\0' || *endText != '\0' ||
+        value < -MAX_TRIM_PERCENT || value > MAX_TRIM_PERCENT) {
+      Serial.println(F("ERROR INVALID_VALUE"));
+      return;
+    }
+
+    saveTrim(command[5], (int8_t)value);
+    Serial.print(F("OK SAVED "));
+    Serial.print(command[5]);
+    Serial.print('=');
+    Serial.println(value);
+    return;
+  }
+
+  Serial.println(F("ERROR UNKNOWN_COMMAND"));
+}
+
+void printConfig()
+{
+  Serial.print(F("CONFIG F="));
+  Serial.print(forwardTrim);
+  Serial.print(F(" B="));
+  Serial.println(backwardTrim);
 }

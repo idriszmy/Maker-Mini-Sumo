@@ -1,13 +1,13 @@
 # Maker Mini Sumo
 
-Firmware RC dan perancangan Web Serial configurator untuk Cytron Maker Mini
-Sumo Controller.
+Firmware RC dan Web Serial configurator untuk Cytron Maker Mini Sumo
+Controller.
 
 ## Struktur projek
 
 - `Arduino/MakerMiniSumo_RC/` — firmware Arduino untuk kawalan RC dan motor alignment.
-- `WebSerialConfigurator/` — aplikasi web yang dirancang untuk konfigurasi
-  melalui Web Serial.
+- `WebSerialConfigurator/` — aplikasi web untuk konfigurasi melalui Web
+  Serial.
 - `docs/PROJECT_PLAN.md` — spesifikasi dan status rasmi projek.
 
 ## Firmware
@@ -24,6 +24,6 @@ Firmware semasa menyediakan:
 
 ## Status Web Configurator
 
-Web Serial configurator masih dalam peringkat perancangan. Rujuk
-[`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) untuk flow pengguna, protokol,
-keselamatan dan milestone pembangunan.
+Versi pertama Web Serial configurator dan protokol firmware telah dibina.
+Rujuk [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) untuk flow pengguna,
+protokol, keselamatan dan milestone ujian hardware.
