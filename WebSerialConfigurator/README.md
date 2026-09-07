@@ -1,16 +1,25 @@
 # Web Serial Configurator
 
-Aplikasi web untuk membaca, melaras dan menyimpan forward/backward motor alignment pada Maker Mini Sumo melalui USB serial.
+Aplikasi web untuk membaca, melaras dan menyimpan forward/backward motor
+alignment pada Maker Mini Sumo melalui USB serial.
 
 ## Status
 
-Belum dilaksanakan. Folder ini disediakan untuk pembangunan prototaip GitHub Pages.
+Belum dilaksanakan. Folder ini disediakan untuk pembangunan local dan
+deployment prototaip melalui GitHub Pages.
 
-## Sasaran awal
+Spesifikasi rasmi projek berada di
+[`../docs/PROJECT_PLAN.md`](../docs/PROJECT_PLAN.md).
 
-- Sambung kepada robot menggunakan Web Serial.
-- Baca nilai alignment daripada robot.
-- Preview alignment dalam RAM.
-- Simpan forward dan backward alignment ke EEPROM.
-- Kekalkan remote RC sebagai kawalan pergerakan robot.
+## Struktur yang dirancang
 
+```text
+WebSerialConfigurator/
+├── index.html
+├── styles.css
+├── app.js
+└── README.md
+```
+
+Versi pertama akan menggunakan HTML, CSS dan JavaScript biasa tanpa framework
+atau build dependency.
