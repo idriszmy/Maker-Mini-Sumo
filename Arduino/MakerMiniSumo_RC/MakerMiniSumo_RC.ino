@@ -479,7 +479,20 @@ void processSerial()
 void handleSerialCommand(char *command)
 {
   if (strcmp(command, "HELLO") == 0) {
-    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO VERSION=1"));
+    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO FW=RC VERSION=1.1.0 PROTOCOL=1"));
+    return;
+  }
+
+  if (strcmp(command, "GET SENSOR") == 0) {
+    uint8_t mask = 0;
+    const uint8_t pins[] = {OPP_L, OPP_FL, OPP_FC, OPP_FR, OPP_R};
+    for (uint8_t i = 0; i < 5; i++) if (!digitalRead(pins[i])) mask |= 1 << i;
+    Serial.print(F("SENSOR ")); Serial.print(mask);
+    Serial.print(' '); Serial.print(analogRead(EDGE_L));
+    Serial.print(' '); Serial.print(analogRead(EDGE_R));
+    Serial.print(' '); Serial.print(digitalRead(START));
+    Serial.print(' '); Serial.print(MakerSumo.readDipSwitch());
+    Serial.print(F(" 98 ")); Serial.println(MakerSumo.readBatteryVoltage(), 2);
     return;
   }
 

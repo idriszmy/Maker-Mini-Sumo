@@ -5,6 +5,21 @@
 RC firmware and a Web Serial configurator for the Cytron Maker Mini Sumo
 Controller.
 
+
+## AutoRC firmware and nine-page configurator
+
+`Arduino/MakerMiniSumo_AutoRC/MakerMiniSumo_AutoRC.ino` adds Auto strategies
+(DIP 0–6), defense on HLH and interrupt-driven RC on HHH. The WebUI identifies
+firmware/version, reads live sensors and edits alignment, Auto behaviour and
+five-row strategies. HLH has configurable forward repetitions and exits early
+on opponent detection.
+
+START/button and IR share D2: release the button / keep IR at STOP when powering
+on or resetting. AutoRC locks motors during WebUI configuration; save, disconnect
+USB and reset before driving. Open the sketch directly from this repository.
+See [the project specification](docs/PROJECT_PLAN.md#autorc-100--implementation-september-2026)
+for protocol, defaults, tuning details and physical verification still required.
+
 ## Open WebUI
 
 [Open Maker Mini Sumo Web Serial Configurator](https://idriszmy.github.io/Maker-Mini-Sumo/)
