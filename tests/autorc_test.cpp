@@ -42,5 +42,19 @@ int main(){
  Serial.input=std::string(210,'x')+"SAVE F 12\n";while(Serial.available())processSerial();assert(forwardTrim==0);
  // Time rollover still advances durations correctly.
  resetTest();testNow=UINT32_MAX-20;enterState(DEF_WAIT);defenseCount=0;config.defense[1]=50;testNow=40;runRobot();assert(state==DEF_MOVE);
+ // Power-on sequence finishes LOW without blocking clock/control.
+ resetTest();setup();assert(buzzerLength==3);uint32_t before=testNow;
+ updateBuzzer();assert(testNow==before);
+ for(int duration: {80,40,110}) {testNow+=duration;updateBuzzer();}
+ assert(buzzerLength==0 && digitalPins[BUZZER]==LOW);
+ command("CONFIG ON");command("SAVE F 5");assert(buzzerLength==5);
+ for(int duration: {60,30,60,30,120}) {testNow+=duration;updateBuzzer();}
+ assert(buzzerLength==0 && digitalPins[BUZZER]==LOW);
+ command("SAVE F 26");assert(buzzerLength==0);
+ command("GET CONFIG");assert(buzzerLength==0);
+ command("SAVE DEF 2 1500 40 45 60");assert(buzzerLength==5);
+ // RC failsafe still runs while a sound is playing.
+ configSession=false;selectedMode=7;rcSpeedLastPulseAt=rcSteeringLastPulseAt=0;
+ MakerSumo.motors[0]=255;loop();assert(MakerSumo.motors[0]==0);
  std::cout<<"AutoRC state, protocol, EEPROM and failsafe tests passed\n";
 }

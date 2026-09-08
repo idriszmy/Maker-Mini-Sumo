@@ -377,3 +377,15 @@ cannot acknowledge a save. A timeout disables editing and requires reconnect.
   wheel polarity, neutral/transmitter-loss failsafe, edge threshold on the actual
   ring, defense detection during motion, USB reset/reconnect and EEPROM power cycle.
 - This implementation is local until committed/pushed and the Pages workflow runs.
+
+### AutoRC 1.0.1 — buzzer feedback
+
+Power-on/reset plays two rising notes. Every accepted EEPROM save (forward or
+backward alignment, Auto Routine, defense or a strategy) plays three rising notes
+after the write completes. Reads and rejected saves do not trigger a sound.
+A new save restarts the confirmation pattern. The buzzer on D8 is driven from
+`micros()`/`millis()` without delays or taking a motor PWM timer; control and
+serial processing continue during sound playback. Software tone pitch may vary
+slightly with loop workload. EEPROM layout and protocol version are unchanged.
+Native tests and Arduino Uno compilation passed; audible output on hardware
+still requires verification. RC-only already has power-on/save sounds.

@@ -1,4 +1,4 @@
-// Maker Mini Sumo AutoRC 1.0.0. DIP 0-6 Auto, 7 RC. START/IR share D2.
+// Maker Mini Sumo AutoRC 1.0.1. DIP 0-6 Auto, 7 RC. START/IR share D2.
 #include <EEPROM.h>
 #include <avr/interrupt.h>
 #include "CytronMakerSumo.h"
@@ -159,6 +159,42 @@ char serialLine[192];
 uint8_t serialLength = 0;
 bool serialOverflow = false;
 
+// Software buzzer avoids taking a hardware timer away from motor PWM.
+const uint16_t POWER_NOTES[] = {NOTE_C5, 0, NOTE_G5};
+const uint16_t POWER_DURATIONS[] = {80, 40, 110};
+const uint16_t SAVE_NOTES[] = {NOTE_E5, 0, NOTE_G5, 0, NOTE_C6};
+const uint16_t SAVE_DURATIONS[] = {60, 30, 60, 30, 120};
+const uint16_t *buzzerNotes = nullptr;
+const uint16_t *buzzerDurations = nullptr;
+uint8_t buzzerStep = 0, buzzerLength = 0;
+uint32_t buzzerStepAt = 0, buzzerEdgeAt = 0;
+bool buzzerHigh = false;
+
+void startBuzzer(bool saved) {
+  buzzerNotes = saved ? SAVE_NOTES : POWER_NOTES;
+  buzzerDurations = saved ? SAVE_DURATIONS : POWER_DURATIONS;
+  buzzerLength = saved ? 5 : 3;
+  buzzerStep = 0;
+  buzzerStepAt = millis(); buzzerEdgeAt = micros();
+  buzzerHigh = false; digitalWrite(BUZZER, LOW);
+}
+void updateBuzzer() {
+  if (!buzzerLength) return;
+  uint32_t now = millis();
+  if (now - buzzerStepAt >= buzzerDurations[buzzerStep]) {
+    digitalWrite(BUZZER, LOW); buzzerHigh = false;
+    if (++buzzerStep >= buzzerLength) { buzzerLength = 0; return; }
+    buzzerStepAt = now; buzzerEdgeAt = micros();
+  }
+  uint16_t frequency = buzzerNotes[buzzerStep];
+  uint32_t nowUs = micros();
+  if (frequency && nowUs - buzzerEdgeAt >= 500000UL / frequency) {
+    buzzerEdgeAt = nowUs;
+    buzzerHigh = !buzzerHigh;
+    digitalWrite(BUZZER, buzzerHigh ? HIGH : LOW);
+  }
+}
+
 void enterState(RunState next);
 void enterState(RunState next) { state = next; stateAt = millis(); }
 void stopRobot() { MakerSumo.stop(); digitalWrite(LED, LOW); }
@@ -228,6 +264,7 @@ void saveSettings() {
   EEPROM.put(CONFIG_ADDRESS + 2, crc);
   EEPROM.update(CONFIG_ADDRESS + 1, CONFIG_VERSION);
   EEPROM.update(CONFIG_ADDRESS, 0xAC);
+  startBuzzer(true);
 }
 void loadSettings() {
   defaults();
@@ -356,7 +393,7 @@ bool parseValues(int16_t *values, uint8_t count) {
 }
 void handleCommand() {
   if (!strcmp(serialLine,"HELLO")) {
-    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.0.0 PROTOCOL=2")); return;
+    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.0.1 PROTOCOL=2")); return;
   }
   if (!strcmp(serialLine,"CONFIG ON")) {
     configSession = true; stopRobot(); Serial.println(F("OK CONFIG")); return;
@@ -383,6 +420,7 @@ void handleCommand() {
     if (direction == 'F') forwardTrim = values[0]; else backwardTrim = values[0];
     EEPROM.update(18,(uint8_t)forwardTrim); EEPROM.update(19,(uint8_t)backwardTrim);
     EEPROM.update(17,1); EEPROM.update(16,0xA7);
+    startBuzzer(true);
     Serial.print(F("OK SAVED ")); Serial.print(direction); Serial.print('='); Serial.println(values[0]); return;
   }
   int16_t *target = NULL; uint8_t count = 0, kind = 0; int strategy = -1;
@@ -423,5 +461,6 @@ void setup() {
   pinMode(START,INPUT_PULLUP); pinMode(RC_SPEED,INPUT_PULLUP); pinMode(RC_STEERING,INPUT_PULLUP);
   beginRcCapture(); loadSettings(); selectedMode = MakerSumo.readDipSwitch();
   initialHigh = digitalRead(START); inputAt = millis();
+  startBuzzer(false);
 }
-void loop() { runRobot(); processSerial(); }
+void loop() { runRobot(); processSerial(); updateBuzzer(); }

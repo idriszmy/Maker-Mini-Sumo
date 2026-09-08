@@ -8,6 +8,11 @@
 #define F(x) x
 #define GPIO1 16
 #define GPIO2 17
+#define BUZZER 8
+#define NOTE_C5 523
+#define NOTE_E5 659
+#define NOTE_G5 784
+#define NOTE_C6 1047
 #define START 2
 #define LED 18
 #define EDGE_L 14
