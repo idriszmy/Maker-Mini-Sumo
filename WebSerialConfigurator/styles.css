@@ -391,9 +391,11 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .webui-version {
-  margin-left: auto;
-  color: var(--text);
+  margin: 8px 0 0;
+  color: var(--accent);
+  font-size: 0.78rem;
   font-weight: 700;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
