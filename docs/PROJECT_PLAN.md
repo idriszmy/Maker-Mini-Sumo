@@ -389,3 +389,13 @@ serial processing continue during sound playback. Software tone pitch may vary
 slightly with loop workload. EEPROM layout and protocol version are unchanged.
 Native tests and Arduino Uno compilation passed; audible output on hardware
 still requires verification. RC-only already has power-on/save sounds.
+
+### Serial startup recovery
+
+The WebUI waits 2 seconds after opening the port and attempts HELLO up to three
+times (2.5-second response timeout each). Only identification is retried; saves
+are never retried automatically. Timeout messages identify the unanswered command.
+This handles a simulated first handshake lost during reset, but physical USB
+startup timing remains to be verified on the user's board.
+Run `node tests/webserial_connection_test.cjs` for legacy RC, RC 1.1.0 and
+AutoRC 1.0.1 handshake, dropped-first-response and silent-device tests.

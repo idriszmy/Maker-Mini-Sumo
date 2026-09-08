@@ -1,6 +1,8 @@
 const BAUD_RATE = 115200;
 const NEW_PORT_VALUE = "new";
 const COMMAND_TIMEOUT_MS = 2500;
+const BOARD_RESET_WAIT_MS = 2000;
+const HELLO_ATTEMPTS = 3;
 
 const elements = {
   portSelect: document.querySelector("#portSelect"),
@@ -210,10 +212,15 @@ function executeCommand(command, matches) {
 
     const timeout = window.setTimeout(() => {
       pendingResponse = null;
-      ready = false;
-      connectionEpoch++;
-      setConnectionState(false);
-      reject(new Error("robot response timed out; reconnect before continuing"));
+      // Only identification is safe to retry while the bootloader is starting.
+      if (command !== "HELLO" || ready) {
+        ready = false;
+        connectionEpoch++;
+        setConnectionState(false);
+      }
+      const error = new Error(`no response to ${command.split(" ").slice(0, 2).join(" ")}; reconnect before continuing`);
+      error.code = "RESPONSE_TIMEOUT";
+      reject(error);
     }, COMMAND_TIMEOUT_MS);
 
     pendingResponse = { resolve, reject, timeout, matches };
@@ -264,10 +271,23 @@ async function connect() {
   void readLoop();
 
   // ATmega328P boards commonly reset when the serial port opens.
-  await new Promise((resolve) => window.setTimeout(resolve, 1500));
+  await new Promise((resolve) => window.setTimeout(resolve, BOARD_RESET_WAIT_MS));
 
-  setSystemMessage("Checking firmware…");
-  const hello = await sendCommand("HELLO");
+  const epoch = connectionEpoch;
+  let hello;
+  for (let attempt = 1; attempt <= HELLO_ATTEMPTS; attempt++) {
+    if (epoch !== connectionEpoch || !keepReading) throw new Error("serial connection closed during startup");
+    setSystemMessage(`Checking firmware… (${attempt}/${HELLO_ATTEMPTS})`);
+    try {
+      hello = await sendCommand("HELLO");
+      break;
+    } catch (error) {
+      if (error.code !== "RESPONSE_TIMEOUT") throw error;
+      if (attempt === HELLO_ATTEMPTS) {
+        throw new Error("no reply to HELLO after 3 attempts. Check the selected port and uploaded firmware; close other serial applications and try again.");
+      }
+    }
+  }
   if (!hello.startsWith("OK DEVICE=MAKER_MINI_SUMO")) {
     throw new Error("unsupported device or firmware");
   }
