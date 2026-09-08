@@ -25,6 +25,7 @@
       <nav id="pageNav" aria-label="Configurator pages"></nav>
       <div id="homePage">
       <section class="connection-panel" aria-labelledby="connectionHeading">
+        <p id="firmwareInfo" class="eyebrow" hidden></p>
         <div class="section-heading">
           <span class="step-number">01</span>
           <div>
@@ -49,18 +50,12 @@
           <p class="field-help" id="portHelp">Previously approved ports appear here after refresh.</p>
         </div>
 
+        <p id="sessionHelp" class="field-help" hidden></p>
         <div class="notice" id="browserNotice" hidden>
           Web Serial is unavailable in this browser. Open this page in Chrome or Edge desktop.
         </div>
       </section>
 
-      <section class="alignment-section">
-        <h2>Firmware &amp; live sensors</h2>
-        <p id="firmwareInfo">Not connected</p>
-        <label><input type="checkbox" id="liveSensors" disabled> Live sensor data (4 updates/second)</label>
-        <div id="sensorData" class="sensor-grid">No sensor data received.</div>
-        <p id="sessionHelp" class="field-help"></p>
-      </section>
       <section class="alignment-section" aria-labelledby="alignmentHeading">
         <div class="section-heading">
           <span class="step-number">02</span>
@@ -141,6 +136,11 @@
 
       </div>
       <section id="editorPage" class="alignment-section" hidden></section>
+      <section id="sensorPanel" class="alignment-section" aria-labelledby="sensorHeading" hidden>
+        <h2 id="sensorHeading">Live sensors</h2>
+        <label><input type="checkbox" id="liveSensors" disabled> Live sensor data (4 updates/second)</label>
+        <div id="sensorData" class="sensor-grid">No sensor data received.</div>
+      </section>
       <footer class="status-bar" aria-live="polite">
         <span class="status-label">System</span>
         <span id="systemMessage">Ready to connect.</span>
