@@ -399,3 +399,7 @@ This handles a simulated first handshake lost during reset, but physical USB
 startup timing remains to be verified on the user's board.
 Run `node tests/webserial_connection_test.cjs` for legacy RC, RC 1.1.0 and
 AutoRC 1.0.1 handshake, dropped-first-response and silent-device tests.
+
+WebUI 1.0.1 displays its version permanently in the status footer. Its CSS and
+JavaScript URLs include the same version as a cache key, making it easier to
+identify and avoid stale browser assets during connection troubleshooting.

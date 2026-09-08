@@ -5,7 +5,7 @@ const prefix=fs.readFileSync('tests/webui_test.cjs','utf8').split('const nodes={
  const commands=[];let controller;let helloCount=0;
  const port={getInfo:()=>({}),open:async()=>{},close:async()=>{},readable:new ReadableStream({start(c){controller=c;}}),writable:new WritableStream({write(bytes){const command=new TextDecoder().decode(bytes).trim();commands.push(command);if(command==='HELLO' && ++helloCount <= dropped)return;const response=command==='HELLO'?hello:command==='CONFIG ON'?'OK CONFIG':'CONFIG F=0 B=0';controller.enqueue(new TextEncoder().encode(response+'\r\n'));}})};
  const context=vm.createContext({console,TextDecoder,TextEncoder,clearTimeout,port,navigator:{serial:{getPorts:async()=>[port],addEventListener(){}}},window:{setInterval(){},setTimeout:(f,ms)=>setTimeout(f,ms===2000?0:10)}});
- vm.runInContext('class Element'+prefix+`const nodes={};const document={querySelector:s=>nodes[s]??=new Element(),createElement:t=>new Element(t)};`,context);
+ vm.runInContext('class Element'+prefix+`const nodes={};const document={documentElement:new Element('html'),querySelector:s=>nodes[s]??=new Element(),createElement:t=>new Element(t)};`,context);
  vm.runInContext(fs.readFileSync('WebSerialConfigurator/app.js','utf8'),context);await new Promise(r=>setImmediate(r));
  if(dropped===3) {
   await assert.rejects(vm.runInContext('connect()',context), /no reply to HELLO after 3 attempts/);

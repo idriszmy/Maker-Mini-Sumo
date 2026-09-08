@@ -1,4 +1,5 @@
 const BAUD_RATE = 115200;
+const WEBUI_VERSION = "1.0.1";
 const NEW_PORT_VALUE = "new";
 const COMMAND_TIMEOUT_MS = 2500;
 const BOARD_RESET_WAIT_MS = 2000;
@@ -37,6 +38,8 @@ let keepReading = false;
 let receiveBuffer = "";
 let pendingResponse = null;
 let commandQueue = Promise.resolve();
+
+document.documentElement.dataset.webuiVersion = WEBUI_VERSION;
 
 function setSystemMessage(message) {
   elements.systemMessage.textContent = message;

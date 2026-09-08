@@ -390,6 +390,13 @@ input[type="range"]::-moz-range-thumb {
   font-size: 0.82rem;
 }
 
+.webui-version {
+  margin-left: auto;
+  color: var(--text);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .status-label {
   color: var(--accent);
   font-weight: 900;

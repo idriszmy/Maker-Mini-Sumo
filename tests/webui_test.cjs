@@ -11,9 +11,10 @@ class Element {
  reportValidity(){return true;}
 }
 const nodes={};
-const document={querySelector:s=>nodes[s]??=new Element(),createElement:t=>new Element(t)};
+const document={documentElement:new Element('html'),querySelector:s=>nodes[s]??=new Element(),createElement:t=>new Element(t)};
 const context=vm.createContext({document,navigator:{},window:{setInterval(){},setTimeout,clearTimeout},clearTimeout,TextEncoder,TextDecoder,console});
 vm.runInContext(fs.readFileSync('WebSerialConfigurator/app.js','utf8'),context);
+assert.equal(vm.runInContext('WEBUI_VERSION', context), '1.0.1');
 assert.equal(nodes['#pageNav'].children.length,9);
 assert(nodes['#pageNav'].children.slice(1).every(n=>n.disabled));
 assert(vm.runInContext('responseMatcher("SAVE F 8")("OK SAVED F=8")',context));
