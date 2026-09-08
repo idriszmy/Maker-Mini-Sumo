@@ -49,10 +49,13 @@ function setConnectionState(connected) {
   elements.forwardSlider.disabled = !connected;
   elements.backwardSlider.disabled = !connected;
   document.querySelector("#liveSensors").disabled = !connected || !firmware?.sensor;
+  document.querySelector("#firmwareInfo").hidden = !connected;
+  document.querySelector("#sessionHelp").hidden = !connected;
+  document.querySelector("#sensorPanel").hidden = !connected || currentPage !== "auto";
   renderNav();
   if (!connected) {
     document.querySelector("#sensorData").textContent = "No sensor data received.";
-    document.querySelector("#firmwareInfo").textContent = "Not connected";
+    document.querySelector("#firmwareInfo").textContent = "";
   }
 
   if (!connected) {
@@ -433,7 +436,7 @@ function responseMatcher(command) {
 function renderNav() {
   const nav = document.querySelector("#pageNav");
   nav.replaceChildren();
-  const labels = ["Utama", "Auto behaviour", "Strategy LLL", "Strategy LLH", "Strategy LHL", "Strategy LHH", "Strategy HLL", "Strategy HLH · Defense", "Strategy HHL"];
+  const labels = ["Main", "Auto behaviour", "Strategy LLL", "Strategy LLH", "Strategy LHL", "Strategy LHH", "Strategy HLL", "Strategy HLH · Defense", "Strategy HHL"];
   labels.forEach((label, index) => {
     const page = index === 0 ? "home" : index === 1 ? "auto" : String(index-2);
     const button = document.createElement("button");
@@ -473,6 +476,7 @@ async function showPage(page) {
   const load = ++pageLoad;
   currentPage = page; renderNav();
   home.hidden = page !== "home"; editor.hidden = page === "home";
+  document.querySelector("#sensorPanel").hidden = page !== "auto" || !ready;
   if (page === "home") return;
   editor.textContent = "Reading saved settings…";
   const group = page === "auto" ? "AUTO" : page === "5" ? "DEF" : `STR ${page}`;
@@ -544,11 +548,11 @@ async function showPage(page) {
   }
 }
 window.setInterval(async () => {
-  if (!ready || sensorBusy || editorBusy || pendingResponse || !document.querySelector("#liveSensors").checked || currentPage !== "home") return;
+  if (!ready || sensorBusy || editorBusy || pendingResponse || !document.querySelector("#liveSensors").checked || currentPage !== "auto") return;
   sensorBusy = true;
   try {
     const line = await sendCommand("GET SENSOR");
-    if (!ready) return;
+    if (!ready || currentPage !== "auto") return;
     const [mask,left,right,start,dip,state,battery] = line.slice(7).split(" ").map(Number);
     const target = document.querySelector("#sensorData"); target.replaceChildren();
     const rows = [

@@ -273,9 +273,11 @@ own commanded direction, including opposite-direction turns.
 
 ### Nine WebUI pages
 
-1. Utama: port connection, firmware/version, optional 4 Hz sensor polling and alignment.
+1. Main: port connection and motor alignment. Firmware/version appears above
+   Connect robot only after a successful connection.
 2. Auto behaviour: independent signed search speeds, attack initial/max speed and
-   ramp duration, reverse/turn/pause settings and edge threshold coefficient.
+   ramp duration, reverse/turn/pause settings and edge threshold coefficient,
+   followed by optional 4 Hz live sensor polling. Polling runs only on this page.
 3. Strategy LLL (0).
 4. Strategy LLH (1).
 5. Strategy LHL (2).
