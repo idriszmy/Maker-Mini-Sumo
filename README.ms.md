@@ -10,7 +10,7 @@ Controller.
 
 `Arduino/MakerMiniSumo_AutoRC/MakerMiniSumo_AutoRC.ino` menyediakan strategi Auto
 (DIP 0–6), defense pada HLH dan RC menggunakan interrupt pada HHH. WebUI
-memaparkan firmware/versi, live sensor, alignment, Auto behaviour dan strategi
+memaparkan firmware/versi, live sensor, alignment, Auto Routine dan strategi
 lima baris. HLH menyediakan bilangan ulangan maju dan exit awal apabila lawan dikesan.
 
 Button START dan IR berkongsi D2: lepaskan button / pastikan IR pada STOP ketika

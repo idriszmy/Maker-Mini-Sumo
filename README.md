@@ -10,7 +10,7 @@ Controller.
 
 `Arduino/MakerMiniSumo_AutoRC/MakerMiniSumo_AutoRC.ino` adds Auto strategies
 (DIP 0–6), defense on HLH and interrupt-driven RC on HHH. The WebUI identifies
-firmware/version, reads live sensors and edits alignment, Auto behaviour and
+firmware/version, reads live sensors and edits alignment, Auto Routine and
 five-row strategies. HLH has configurable forward repetitions and exits early
 on opponent detection.
 

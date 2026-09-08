@@ -275,7 +275,7 @@ own commanded direction, including opposite-direction turns.
 
 1. Main: port connection and motor alignment. Firmware/version appears above
    Connect robot only after a successful connection.
-2. Auto behaviour: independent signed search speeds, attack initial/max speed and
+2. Auto Routine: independent signed search speeds, attack initial/max speed and
    ramp duration, reverse/turn/pause settings and edge threshold coefficient,
    followed by optional 4 Hz live sensor polling. Polling runs only on this page.
 3. Strategy LLL (0).

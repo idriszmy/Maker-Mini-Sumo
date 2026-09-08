@@ -436,7 +436,7 @@ function responseMatcher(command) {
 function renderNav() {
   const nav = document.querySelector("#pageNav");
   nav.replaceChildren();
-  const labels = ["Main", "Auto behaviour", "Strategy LLL", "Strategy LLH", "Strategy LHL", "Strategy LHH", "Strategy HLL", "Strategy HLH · Defense", "Strategy HHL"];
+  const labels = ["Main", "Auto Routine", "Strategy LLL", "Strategy LLH", "Strategy LHL", "Strategy LHH", "Strategy HLL", "Strategy HLH · Defense", "Strategy HHL"];
   labels.forEach((label, index) => {
     const page = index === 0 ? "home" : index === 1 ? "auto" : String(index-2);
     const button = document.createElement("button");
@@ -489,7 +489,7 @@ async function showPage(page) {
     editor.replaceChildren();
     const heading = document.createElement("h2");
     const dip = Number(page).toString(2).padStart(3,"0").replaceAll("0","L").replaceAll("1","H");
-    heading.textContent = page === "auto" ? "Auto behaviour" : `Strategy ${dip}${page === "5" ? " · Defense" : ""}`;
+    heading.textContent = page === "auto" ? "Auto Routine" : `Strategy ${dip}${page === "5" ? " · Defense" : ""}`;
     const help = document.createElement("p"); help.className = "field-help";
     help.textContent = page === "auto" ? "Search defaults to straight. Speeds are adjusted by saved motor alignment."
       : page === "5" ? "Exit when repetitions finish or any opponent sensor detects a target. Zero repetitions skips defense."

@@ -5,7 +5,7 @@ HTML, CSS and JavaScript. Serve this directory on localhost or HTTPS and open
 in desktop Chrome/Edge. No build dependencies or simulated device data.
 
 Main provides connection and motor alignment. Firmware/version appears above
-Connect robot only after connecting. AutoRC enables Auto behaviour with live
+Connect robot only after connecting. AutoRC enables Auto Routine with live
 sensors below its settings, plus seven strategy pages with HLH dedicated to
 defense. RC-only firmware exposes Main functionality. All interface text is English.
 
