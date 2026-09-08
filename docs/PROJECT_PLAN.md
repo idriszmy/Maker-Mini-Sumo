@@ -422,3 +422,13 @@ fall back to the new defaults once after upload. AutoRC protocol is 3 because th
 AUTO payload now contains nine integers. Live sensors retain opponent, edge,
 D2, DIP and battery readings; state is no longer displayed. WebUI assets use
 version 1.1.0 as their cache key.
+
+### AutoRC 1.1.1 — START/IR startup detection
+
+D2 input identification now waits at least 1 second after setup and requires
+the final level to remain stable for 100 ms. This allows an active-high IR start
+module to finish powering up and drive its idle LOW level before the firmware
+chooses the input type. After classification, firmware must observe the chosen
+input inactive before it can accept a start event. This prevents a startup level
+transition from being mistaken for an active-low START button press. Button
+presses retain 25 ms debounce. The protocol and EEPROM schema are unchanged.

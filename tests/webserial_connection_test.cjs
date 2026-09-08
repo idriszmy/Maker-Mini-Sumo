@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict');
 const fs=require('fs'),vm=require('vm'),{ReadableStream,WritableStream}=require('node:stream/web');
 const prefix=fs.readFileSync('tests/webui_test.cjs','utf8').split('const nodes={};')[0].split('class Element')[1];
-(async()=>{for(const dropped of [0,1,3]) for(const hello of ['OK DEVICE=MAKER_MINI_SUMO VERSION=1','OK DEVICE=MAKER_MINI_SUMO FW=RC VERSION=1.1.0 PROTOCOL=1','OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.1.0 PROTOCOL=3']){
+(async()=>{for(const dropped of [0,1,3]) for(const hello of ['OK DEVICE=MAKER_MINI_SUMO VERSION=1','OK DEVICE=MAKER_MINI_SUMO FW=RC VERSION=1.1.0 PROTOCOL=1','OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.1.1 PROTOCOL=3']){
  const commands=[];let controller;let helloCount=0;
  const port={getInfo:()=>({}),open:async()=>{},close:async()=>{},readable:new ReadableStream({start(c){controller=c;}}),writable:new WritableStream({write(bytes){const command=new TextDecoder().decode(bytes).trim();commands.push(command);if(command==='HELLO' && ++helloCount <= dropped)return;const response=command==='HELLO'?hello:command==='CONFIG ON'?'OK CONFIG':'CONFIG F=0 B=0';controller.enqueue(new TextEncoder().encode(response+'\r\n'));}})};
  const context=vm.createContext({console,TextDecoder,TextEncoder,clearTimeout,port,navigator:{serial:{getPorts:async()=>[port],addEventListener(){}}},window:{setInterval(){},setTimeout:(f,ms)=>setTimeout(f,ms===2000?0:10)}});

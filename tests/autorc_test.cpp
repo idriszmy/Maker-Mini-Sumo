@@ -2,7 +2,7 @@
 #include <cassert>
 #include <iostream>
 void resetTest() {
- defaults(); configSession=false; selectedMode=0; buttonStart=true; attacking=false;
+ defaults(); configSession=false; selectedMode=0; buttonStart=true; inputArmed=false; attacking=false;
  testNow=100; forwardTrim=backwardTrim=0;
  for(int i=0;i<32;i++){digitalPins[i]=HIGH;analogPins[i]=800;}
  edgeLeftThreshold=edgeRightThreshold=400; stopRobot(); enterState(FIGHT);
@@ -26,9 +26,16 @@ int main(){
  for(RunState s: {OPENING,DEF_WAIT,DEF_MOVE,FIGHT,BACK_REVERSE,BACK_TURN,BACK_PAUSE}) {
   resetTest();buttonStart=false;digitalPins[START]=LOW;enterState(s);runRobot();assert(state==STOPPED && MakerSumo.motors[0]==0);
  }
- resetTest();enterState(IDENTIFY);initialHigh=true;inputAt=testNow;testNow+=50;runRobot();assert(buttonStart && state==WAIT_START);
- digitalPins[START]=LOW;testNow+=25;runRobot();assert(state==COUNTDOWN);testNow+=5000;runRobot();assert(state==OPENING);
- resetTest();digitalPins[START]=LOW;initialHigh=false;inputAt=testNow;enterState(IDENTIFY);testNow+=50;runRobot();assert(!buttonStart && state==WAIT_START);digitalPins[START]=HIGH;runRobot();assert(state==OPENING);
+ resetTest();enterState(IDENTIFY);initialHigh=true;inputAt=identifyStartedAt=testNow;
+ testNow+=999;runRobot();assert(state==IDENTIFY);testNow+=1;runRobot();assert(buttonStart && state==WAIT_START);
+ // A start is ignored until the selected input has first been observed idle.
+ digitalPins[START]=LOW;testNow+=25;runRobot();assert(state==WAIT_START);
+ digitalPins[START]=HIGH;runRobot();digitalPins[START]=LOW;testNow+=25;runRobot();assert(state==COUNTDOWN);
+ testNow+=5000;runRobot();assert(state==OPENING);
+ // An IR output that settles LOW during startup is classified as active-high IR.
+ resetTest();initialHigh=true;inputAt=identifyStartedAt=testNow;enterState(IDENTIFY);
+ testNow+=200;digitalPins[START]=LOW;runRobot();testNow+=800;runRobot();assert(!buttonStart && state==WAIT_START);
+ runRobot();assert(inputArmed);digitalPins[START]=HIGH;runRobot();assert(state==OPENING);
  // Edge thresholds use the first run reading and POT sensitivity trim.
  resetTest();analogPins[EDGE_L]=800;analogPins[EDGE_R]=600;analogPins[POT]=0;startOpening();
  assert(edgeLeftThreshold==200 && edgeRightThreshold==150);

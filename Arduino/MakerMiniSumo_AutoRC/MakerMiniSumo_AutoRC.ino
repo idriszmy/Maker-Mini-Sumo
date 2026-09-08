@@ -1,4 +1,4 @@
-// Maker Mini Sumo AutoRC 1.1.0. DIP 0-6 Auto, 7 RC. START/IR share D2.
+// Maker Mini Sumo AutoRC 1.1.1. DIP 0-6 Auto, 7 RC. START/IR share D2.
 #include <EEPROM.h>
 #include <avr/interrupt.h>
 #include "CytronMakerSumo.h"
@@ -149,11 +149,14 @@ constexpr uint8_t EDGE_SENSITIVITY_MIN_PERCENT = 25;
 constexpr uint8_t EDGE_SENSITIVITY_MAX_PERCENT = 75;
 constexpr uint16_t BACKOFF_PAUSE_MS = 50;
 constexpr uint32_t BUTTON_COUNTDOWN_MS = 5000;
-constexpr uint32_t INPUT_STABLE_MS = 50;
+constexpr uint16_t INPUT_SETTLE_MS = 1000;
+constexpr uint8_t INPUT_STABLE_MS = 100;
+constexpr uint8_t START_DEBOUNCE_MS = 25;
 constexpr uint16_t MAX_DURATION_MS = 10000;
 RunState state = IDENTIFY;
-uint32_t stateAt = 0, inputAt = 0, attackAt = 0;
-bool initialHigh = true, buttonStart = true, configSession = false, attacking = false;
+uint32_t stateAt = 0, inputAt = 0, identifyStartedAt = 0, attackAt = 0;
+bool initialHigh = true, buttonStart = true, inputArmed = false;
+bool configSession = false, attacking = false;
 uint8_t selectedMode = 0, stepIndex = 0, defenseCount = 0;
 bool turnRight = true;
 int edgeLeftThreshold = 0, edgeRightThreshold = 0;
@@ -313,15 +316,23 @@ void runRobot() {
   if (state == IDENTIFY) {
     stopRobot();
     if (high != initialHigh) { initialHigh = high; inputAt = now; }
-    if (now-inputAt >= INPUT_STABLE_MS) { buttonStart = initialHigh; enterState(WAIT_START); }
+    if (now-identifyStartedAt >= INPUT_SETTLE_MS && now-inputAt >= INPUT_STABLE_MS) {
+      buttonStart = initialHigh;
+      inputArmed = false;
+      inputAt = now;
+      enterState(WAIT_START);
+    }
     return;
   }
   if (state == STOPPED) { stopRobot(); return; }
   if (state == WAIT_START) {
     stopRobot();
     bool active = buttonStart ? !high : high;
-    if (!active) inputAt = now;
-    else if (now-inputAt >= (buttonStart ? 25UL : 0UL)) {
+    if (!active) {
+      inputArmed = true;
+      inputAt = now;
+    }
+    else if (inputArmed && now-inputAt >= (buttonStart ? START_DEBOUNCE_MS : 0UL)) {
       if (buttonStart) enterState(COUNTDOWN); else startOpening();
     }
     return;
@@ -400,7 +411,7 @@ bool parseValues(int16_t *values, uint8_t count) {
 }
 void handleCommand() {
   if (!strcmp(serialLine,"HELLO")) {
-    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.1.0 PROTOCOL=3")); return;
+    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.1.1 PROTOCOL=3")); return;
   }
   if (!strcmp(serialLine,"CONFIG ON")) {
     configSession = true; stopRobot(); Serial.println(F("OK CONFIG")); return;
@@ -467,7 +478,7 @@ void setup() {
   Serial.begin(115200); MakerSumo.begin(); stopRobot();
   pinMode(START,INPUT_PULLUP); pinMode(RC_SPEED,INPUT_PULLUP); pinMode(RC_STEERING,INPUT_PULLUP);
   beginRcCapture(); loadSettings(); selectedMode = MakerSumo.readDipSwitch();
-  initialHigh = digitalRead(START); inputAt = millis();
+  initialHigh = digitalRead(START); inputAt = identifyStartedAt = millis();
   startBuzzer(false);
 }
 void loop() { runRobot(); processSerial(); updateBuzzer(); }
