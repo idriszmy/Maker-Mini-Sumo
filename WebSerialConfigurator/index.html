@@ -13,8 +13,8 @@
       <header class="masthead">
         <div>
           <p class="eyebrow">Cytron Maker Mini Sumo</p>
-          <h1>Motor Alignment</h1>
-          <p class="intro">Balance forward and reverse motor speed over USB serial.</p>
+          <h1>Robot Configurator</h1>
+          <p class="intro">Tune your Maker Mini Sumo over USB serial.</p>
         </div>
         <div class="connection-badge" id="connectionBadge" data-state="offline">
           <span class="status-dot" aria-hidden="true"></span>
@@ -22,6 +22,8 @@
         </div>
       </header>
 
+      <nav id="pageNav" aria-label="Configurator pages"></nav>
+      <div id="homePage">
       <section class="connection-panel" aria-labelledby="connectionHeading">
         <div class="section-heading">
           <span class="step-number">01</span>
@@ -52,12 +54,19 @@
         </div>
       </section>
 
+      <section class="alignment-section">
+        <h2>Firmware &amp; live sensors</h2>
+        <p id="firmwareInfo">Not connected</p>
+        <label><input type="checkbox" id="liveSensors" disabled> Live sensor data (4 updates/second)</label>
+        <div id="sensorData" class="sensor-grid">No sensor data received.</div>
+        <p id="sessionHelp" class="field-help"></p>
+      </section>
       <section class="alignment-section" aria-labelledby="alignmentHeading">
         <div class="section-heading">
           <span class="step-number">02</span>
           <div>
             <h2 id="alignmentHeading">Align motor speed</h2>
-            <p>Move the robot with its RC remote, then release a slider to save.</p>
+            <p id="alignmentHelp">Connect the robot to read and save motor alignment.</p>
           </div>
         </div>
 
@@ -130,6 +139,8 @@
         </div>
       </section>
 
+      </div>
+      <section id="editorPage" class="alignment-section" hidden></section>
       <footer class="status-bar" aria-live="polite">
         <span class="status-label">System</span>
         <span id="systemMessage">Ready to connect.</span>
