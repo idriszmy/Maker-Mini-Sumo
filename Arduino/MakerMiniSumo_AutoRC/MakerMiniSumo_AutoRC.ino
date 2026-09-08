@@ -1,4 +1,4 @@
-// Maker Mini Sumo AutoRC 1.0.1. DIP 0-6 Auto, 7 RC. START/IR share D2.
+// Maker Mini Sumo AutoRC 1.1.0. DIP 0-6 Auto, 7 RC. START/IR share D2.
 #include <EEPROM.h>
 #include <avr/interrupt.h>
 #include "CytronMakerSumo.h"
@@ -132,8 +132,8 @@ bool readRcChannel(uint8_t pin, float &value)
 
 
 // All durations are milliseconds; speeds are signed percentages.
-enum AutoField { SEARCH_L, SEARCH_R, ATTACK_INITIAL, ATTACK_MAX, ATTACK_MS,
-  BACK_SPEED, BACK_MS, TURN_SPEED, TURN_MS, PAUSE_MS, EDGE_PERCENT, AUTO_FIELDS };
+enum AutoField { SEARCH_L, SEARCH_R, BACK_SPEED, BACK_MS, TURN_SPEED, TURN_MS,
+  ATTACK_INITIAL, ATTACK_MS, ATTACK_MAX, AUTO_FIELDS };
 enum RunState { IDENTIFY, WAIT_START, COUNTDOWN, OPENING, DEF_WAIT, DEF_MOVE,
   FIGHT, BACK_REVERSE, BACK_TURN, BACK_PAUSE, STOPPED };
 struct Settings {
@@ -141,10 +141,13 @@ struct Settings {
   int16_t defense[5]; // repetitions, wait ms, left %, right %, move ms
   int16_t steps[7][20]; // five rows: enabled, left, right, duration
 };
-static_assert(sizeof(Settings) == 312, "EEPROM schema size changed; bump its version");
+static_assert(sizeof(Settings) == 308, "EEPROM schema size changed; bump its version");
 Settings config;
 constexpr int CONFIG_ADDRESS = 32;
-constexpr uint8_t CONFIG_VERSION = 1;
+constexpr uint8_t CONFIG_VERSION = 2;
+constexpr uint8_t EDGE_SENSITIVITY_MIN_PERCENT = 25;
+constexpr uint8_t EDGE_SENSITIVITY_MAX_PERCENT = 75;
+constexpr uint16_t BACKOFF_PAUSE_MS = 50;
 constexpr uint32_t BUTTON_COUNTDOWN_MS = 5000;
 constexpr uint32_t INPUT_STABLE_MS = 50;
 constexpr uint16_t MAX_DURATION_MS = 10000;
@@ -219,10 +222,10 @@ bool validValues(const int16_t *v, uint8_t kind) {
   if (kind == 0) {
     for (uint8_t i = 0; i < AUTO_FIELDS; i++) {
       int lo = i < 2 ? -100 : 0;
-      int hi = (i == ATTACK_MS || i == BACK_MS || i == TURN_MS || i == PAUSE_MS) ? MAX_DURATION_MS : 100;
+      int hi = (i == ATTACK_MS || i == BACK_MS || i == TURN_MS) ? MAX_DURATION_MS : 100;
       if (v[i] < lo || v[i] > hi) return false;
     }
-    return v[EDGE_PERCENT] >= 1 && v[EDGE_PERCENT] <= 99;
+    return true;
   }
   if (kind == 1) return v[0] >= 0 && v[0] <= 100 && v[1] >= 1 && v[1] <= MAX_DURATION_MS &&
     v[2] >= 0 && v[2] <= 100 && v[3] >= 0 && v[3] <= 100 && v[4] >= 1 && v[4] <= MAX_DURATION_MS;
@@ -242,7 +245,7 @@ uint16_t checksum() {
 }
 void defaults() {
   memset(&config, 0, sizeof(config));
-  const int16_t behaviour[] = {35,35,50,100,300,100,100,100,120,50,50};
+  const int16_t behaviour[] = {35,35,100,100,100,120,50,300,100};
   const int16_t defense[] = {3,2000,50,50,50};
   memcpy(config.behaviour, behaviour, sizeof(behaviour));
   memcpy(config.defense, defense, sizeof(defense));
@@ -282,8 +285,12 @@ void loadSettings() {
   }
 }
 void startOpening() {
-  edgeLeftThreshold = analogRead(EDGE_L) * (long)config.behaviour[EDGE_PERCENT] / 100;
-  edgeRightThreshold = analogRead(EDGE_R) * (long)config.behaviour[EDGE_PERCENT] / 100;
+  // Sample the dark ring surface at start. POT then trims threshold sensitivity.
+  int edgeSensitivity = map(analogRead(POT), 0, 1023,
+                            EDGE_SENSITIVITY_MIN_PERCENT,
+                            EDGE_SENSITIVITY_MAX_PERCENT);
+  edgeLeftThreshold = analogRead(EDGE_L) * (long)edgeSensitivity / 100;
+  edgeRightThreshold = analogRead(EDGE_R) * (long)edgeSensitivity / 100;
   stepIndex = defenseCount = 0;
   enterState(selectedMode == 5 ? DEF_WAIT : OPENING);
 }
@@ -343,7 +350,7 @@ void runRobot() {
       if (now-stateAt >= (uint16_t)a[TURN_MS]) enterState(BACK_PAUSE);
       break;
     case BACK_PAUSE:
-      stopRobot(); if (now-stateAt >= (uint16_t)a[PAUSE_MS]) enterState(FIGHT); break;
+      stopRobot(); if (now-stateAt >= BACKOFF_PAUSE_MS) enterState(FIGHT); break;
     case OPENING: {
       int16_t *rows = config.steps[selectedMode];
       while (stepIndex < 5 && !rows[stepIndex*4]) stepIndex++;
@@ -393,7 +400,7 @@ bool parseValues(int16_t *values, uint8_t count) {
 }
 void handleCommand() {
   if (!strcmp(serialLine,"HELLO")) {
-    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.0.1 PROTOCOL=2")); return;
+    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.1.0 PROTOCOL=3")); return;
   }
   if (!strcmp(serialLine,"CONFIG ON")) {
     configSession = true; stopRobot(); Serial.println(F("OK CONFIG")); return;

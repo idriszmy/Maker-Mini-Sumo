@@ -12,6 +12,9 @@ defense. RC-only firmware exposes Main functionality. All interface text is Engl
 AutoRC locks motors for configuration until reset. Save settings, disconnect USB
 and reset with START released / IR at STOP before testing motion.
 
+WebUI 1.1.0 groups Auto Routine into Search, Backoff and Attack. Backoff pause
+and edge threshold are handled by firmware; live sensors omit internal state.
+
 The protocol, field ranges, EEPROM layout and verification status are maintained
 in [the project specification](../docs/PROJECT_PLAN.md#autorc-100--implementation-september-2026).
 

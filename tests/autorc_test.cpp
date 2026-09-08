@@ -29,6 +29,10 @@ int main(){
  resetTest();enterState(IDENTIFY);initialHigh=true;inputAt=testNow;testNow+=50;runRobot();assert(buttonStart && state==WAIT_START);
  digitalPins[START]=LOW;testNow+=25;runRobot();assert(state==COUNTDOWN);testNow+=5000;runRobot();assert(state==OPENING);
  resetTest();digitalPins[START]=LOW;initialHigh=false;inputAt=testNow;enterState(IDENTIFY);testNow+=50;runRobot();assert(!buttonStart && state==WAIT_START);digitalPins[START]=HIGH;runRobot();assert(state==OPENING);
+ // Edge thresholds use the first run reading and POT sensitivity trim.
+ resetTest();analogPins[EDGE_L]=800;analogPins[EDGE_R]=600;analogPins[POT]=0;startOpening();
+ assert(edgeLeftThreshold==200 && edgeRightThreshold==150);
+ analogPins[POT]=1023;startOpening();assert(edgeLeftThreshold==600 && edgeRightThreshold==450);
  // RC neutral, full throttle, loss and invalid pulse.
  resetTest();selectedMode=7;rcSpeedPulseWidth=2000;rcSteeringPulseWidth=1500;rcSpeedLastPulseAt=rcSteeringLastPulseAt=micros();runRobot();assert(MakerSumo.motors[0]==255);testNow+=31;runRobot();assert(MakerSumo.motors[0]==0);
  rcSpeedLastPulseAt=rcSteeringLastPulseAt=micros();rcSpeedPulseWidth=500;runRobot();assert(MakerSumo.motors[0]==0);

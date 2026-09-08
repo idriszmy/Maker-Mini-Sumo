@@ -14,7 +14,7 @@ const nodes={};
 const document={documentElement:new Element('html'),querySelector:s=>nodes[s]??=new Element(),createElement:t=>new Element(t)};
 const context=vm.createContext({document,navigator:{},window:{setInterval(){},setTimeout,clearTimeout},clearTimeout,TextEncoder,TextDecoder,console});
 vm.runInContext(fs.readFileSync('WebSerialConfigurator/app.js','utf8'),context);
-assert.equal(vm.runInContext('WEBUI_VERSION', context), '1.0.1');
+assert.equal(vm.runInContext('WEBUI_VERSION', context), '1.1.0');
 assert.equal(nodes['#pageNav'].children.length,9);
 assert(nodes['#pageNav'].children.slice(1).every(n=>n.disabled));
 assert(vm.runInContext('responseMatcher("SAVE F 8")("OK SAVED F=8")',context));
@@ -24,7 +24,7 @@ vm.runInContext('var resolved = false; pendingResponse = {matches:responseMatche
 assert(!vm.runInContext('resolved',context));
 vm.runInContext('handleSerialLine("OK SAVED DEF")',context);assert(vm.runInContext('resolved',context));
 (async()=>{
- vm.runInContext('ready=true; firmware={type:"AutoRC",sensor:true};sendCommand=async command => command==="GET AUTO" ? "AUTO 35 35 50 100 300 100 100 100 120 50 50" : command==="GET DEF" ? "DEF 3 2000 50 50 50" : command.slice(4)+" "+Array(5).fill("0 0 0 100").join(" ")',context);
+ vm.runInContext('ready=true; firmware={type:"AutoRC",sensor:true};sendCommand=async command => command==="GET AUTO" ? "AUTO 35 35 100 100 100 120 50 300 100" : command==="GET DEF" ? "DEF 3 2000 50 50 50" : command.slice(4)+" "+Array(5).fill("0 0 0 100").join(" ")',context);
  await vm.runInContext('showPage("0")',context);
  const form=nodes['#editorPage'].querySelector('form');
  assert.equal(form.children.filter(n=>n.tag==='fieldset').length,5);
@@ -34,7 +34,9 @@ vm.runInContext('handleSerialLine("OK SAVED DEF")',context);assert(vm.runInConte
  await vm.runInContext('showPage("5")',context);
  assert.equal(nodes['#editorPage'].querySelector('form').children[0].children.length,5);
  await vm.runInContext('showPage("auto")',context);
- assert.equal(nodes['#editorPage'].querySelector('form').children[0].children.length,11);
+ const routineForm=nodes['#editorPage'].querySelector('form');
+ assert.equal(routineForm.children.filter(n=>n.tag==='fieldset').length,3);
+ assert.equal(routineForm.children.slice(0,3).reduce((n,g)=>n+g.children[1].children.length,0),9);
  await vm.runInContext('showPage("home")',context);assert(nodes['#editorPage'].hidden);
  console.log('WebUI navigation, fields and response isolation tests passed');
 })().catch(e=>{console.error(e);process.exitCode=1});

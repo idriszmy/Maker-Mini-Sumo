@@ -13,6 +13,10 @@ Controller.
 memaparkan firmware/versi, live sensor, alignment, Auto Routine dan strategi
 lima baris. HLH menyediakan bilangan ulangan maju dan exit awal apabila lawan dikesan.
 
+AutoRC 1.1.0 mengumpulkan tuning kepada Search, Backoff dan Attack. Edge
+sensitivity menggunakan potentiometer dan bacaan permukaan pertama ketika run
+bermula. WebUI 1.1.0 memaparkan live sensor tanpa nilai state dalaman.
+
 Button START dan IR berkongsi D2: lepaskan button / pastikan IR pada STOP ketika
 power-on atau reset. AutoRC mengunci motor sepanjang konfigurasi WebUI; simpan,
 disconnect USB dan reset sebelum menguji gerakan. Buka sketch terus daripada

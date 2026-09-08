@@ -275,9 +275,8 @@ own commanded direction, including opposite-direction turns.
 
 1. Main: port connection and motor alignment. Firmware/version appears above
    Connect robot only after a successful connection.
-2. Auto Routine: independent signed search speeds, attack initial/max speed and
-   ramp duration, reverse/turn/pause settings and edge threshold coefficient,
-   followed by optional 4 Hz live sensor polling. Polling runs only on this page.
+2. Auto Routine: grouped Search, Backoff and Attack settings, followed by
+   optional 4 Hz live sensor polling. Polling runs only on this page.
 3. Strategy LLL (0).
 4. Strategy LLH (1).
 5. Strategy LHL (2).
@@ -301,10 +300,10 @@ Defaults: 3 pulses, wait 2000 ms, 50% both motors, move 50 ms.
 
 Search defaults to straight at 35% both motors. Attack defaults to 50%, rising to
 100% after 300 ms of continuous centre detection. Backoff defaults: reverse 100%
-for 100 ms, turn 100% for 120 ms, stop 50 ms. Edge thresholds are sampled from the
-starting surface immediately before opening, multiplied by 50% by default.
-Higher coefficients trigger at higher analog values. Place both edge sensors over
-the dark ring surface before starting. Both-edge detection chooses a right turn.
+for 100 ms, turn 100% for 120 ms, then stop for a fixed 50 ms. Edge thresholds
+are sampled from the starting surface immediately before opening. Potentiometer
+centre uses about 50% of that reading. Place both edge sensors over the dark ring
+surface before starting. Both-edge detection chooses a right turn.
 
 All motion timing uses `millis()`. IR STOP preempts all Auto states. An edge
 interrupts opening/defense/fight and starts reverse → turn → pause → fight; it does
@@ -329,25 +328,25 @@ RC-controlled alignment workflow; its live sensor requests do not lock motors.
 
 ```text
 OK DEVICE=MAKER_MINI_SUMO FW=RC VERSION=1.1.0 PROTOCOL=1
-OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.0.0 PROTOCOL=2
+OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.1.0 PROTOCOL=3
 ```
 
 The WebUI also supports the previous RC handshake `VERSION=1` without `FW`, with
-live sensors disabled. Auto pages require recognized AutoRC protocol 2.
+live sensors disabled. Auto pages require recognized AutoRC protocol 3.
 
 ```text
 CONFIG ON                  -> OK CONFIG
 GET SENSOR                 -> SENSOR mask edgeL edgeR d2 dip state batteryV
-GET AUTO                   -> AUTO <11 integers>
-SAVE AUTO <11 integers>     -> OK SAVED AUTO
+GET AUTO                   -> AUTO <9 integers>
+SAVE AUTO <9 integers>      -> OK SAVED AUTO
 GET DEF                    -> DEF <5 integers>
 SAVE DEF <5 integers>       -> OK SAVED DEF
 GET STR 4                  -> STR 4 <20 integers>
 SAVE STR 4 <20 integers>    -> OK SAVED STR 4
 ```
 
-AUTO integer order: searchL, searchR, attackInitial, attackMax, attackRampMs,
-reverseSpeed, reverseMs, turnSpeed, turnMs, pauseMs, edgePercent.
+AUTO integer order: searchL, searchR, reverseSpeed, reverseMs, turnSpeed,
+turnMs, attackInitial, attackRampMs, attackMax.
 DEF order: repetitions, waitMs, leftSpeed, rightSpeed, moveMs.
 STR order: enabled, leftSpeed, rightSpeed, durationMs, repeated five times.
 STR 5 is rejected: use DEF. Existing `GET CONFIG`, `SAVE F n`, `SAVE B n` retain
@@ -360,7 +359,7 @@ State values: 0 identify, 1 wait, 2 countdown, 3 opening, 4 defense wait,
 99 configuration. Sensors are sent only on request, never unsolicited.
 
 EEPROM 0–3 remains reserved for the library; 16–19 remains compatible alignment.
-Auto settings use bytes 32–347: magic, schema version, CRC16, 312-byte settings.
+Auto settings use bytes 32–343: magic, schema version, CRC16, 308-byte settings.
 Writes invalidate magic first and restore it last. Interrupted/corrupt Auto saves
 fall back to defaults at boot. Each save uses EEPROM.update/put, not continuous
 writes. Browser save acknowledgement must match the requested command; telemetry
@@ -400,6 +399,26 @@ startup timing remains to be verified on the user's board.
 Run `node tests/webserial_connection_test.cjs` for legacy RC, RC 1.1.0 and
 AutoRC 1.0.1 handshake, dropped-first-response and silent-device tests.
 
-WebUI 1.0.1 displays its version permanently below the Robot Configurator title. Its CSS and
-JavaScript URLs include the same version as a cache key, making it easier to
+WebUI displays its version permanently below the Robot Configurator title. Its
+CSS and JavaScript URLs include the same version as a cache key, making it easier to
 identify and avoid stale browser assets during connection troubleshooting.
+
+### AutoRC 1.1.0 / WebUI 1.1.0 — grouped Auto Routine
+
+Auto Routine is grouped into Search, Backoff and Attack. Its nine saved values
+are: search left/right; reverse speed/duration; turn speed/duration; attack
+initial speed/ramp time/maximum speed. The backoff pause is fixed at 50 ms in
+firmware and is no longer configurable.
+
+Edge threshold is no longer saved or shown in WebUI. Immediately before the
+opening strategy, each edge sensor's first dark-ring reading becomes its own
+reference. The potentiometer maps sensitivity from 25% at the left end through
+about 50% at centre to 75% at the right end; turning right detects an edge at a
+higher reading and therefore makes detection more sensitive. Place both edge
+sensors on the dark ring surface before starting.
+
+The Auto settings schema is version 2 and occupies 308 bytes; older Auto settings
+fall back to the new defaults once after upload. AutoRC protocol is 3 because the
+AUTO payload now contains nine integers. Live sensors retain opponent, edge,
+D2, DIP and battery readings; state is no longer displayed. WebUI assets use
+version 1.1.0 as their cache key.

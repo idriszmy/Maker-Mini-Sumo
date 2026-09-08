@@ -14,6 +14,10 @@ firmware/version, reads live sensors and edits alignment, Auto Routine and
 five-row strategies. HLH has configurable forward repetitions and exits early
 on opponent detection.
 
+AutoRC 1.1.0 groups routine tuning into Search, Backoff and Attack. Edge
+sensitivity uses the onboard potentiometer and the first surface reading at run
+start. WebUI 1.1.0 shows live sensors without the internal state value.
+
 START/button and IR share D2: release the button / keep IR at STOP when powering
 on or resetting. AutoRC locks motors during WebUI configuration; save, disconnect
 USB and reset before driving. Open the sketch directly from this repository.

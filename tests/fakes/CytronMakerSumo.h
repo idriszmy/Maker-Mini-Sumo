@@ -17,6 +17,7 @@
 #define LED 18
 #define EDGE_L 14
 #define EDGE_R 15
+#define POT 19
 #define OPP_L 12
 #define OPP_FL 5
 #define OPP_FC 6
@@ -45,6 +46,7 @@ int digitalRead(int p){return digitalPins[p];}
 int analogRead(int p){return analogPins[p];}
 void digitalWrite(int p,int v){digitalPins[p]=v;}
 template<class T> T constrain(T v,T lo,T hi){return std::max(lo,std::min(v,hi));}
+long map(long value,long fromLow,long fromHigh,long toLow,long toHigh){return (value-fromLow)*(toHigh-toLow)/(fromHigh-fromLow)+toLow;}
 struct FakeSerial {
  std::string output, input;
  void begin(int){}

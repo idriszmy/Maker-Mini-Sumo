@@ -1,5 +1,5 @@
 const BAUD_RATE = 115200;
-const WEBUI_VERSION = "1.0.1";
+const WEBUI_VERSION = "1.1.0";
 const NEW_PORT_VALUE = "new";
 const COMMAND_TIMEOUT_MS = 2500;
 const BOARD_RESET_WAIT_MS = 2000;
@@ -297,7 +297,7 @@ async function connect() {
 
   const fields = Object.fromEntries(hello.split(" ").slice(1).map((part) => part.split("=")));
   if (fields.DEVICE !== "MAKER_MINI_SUMO" || ![undefined, "RC", "AutoRC"].includes(fields.FW) ||
-      (fields.FW === "AutoRC" && fields.PROTOCOL !== "2") ||
+      (fields.FW === "AutoRC" && fields.PROTOCOL !== "3") ||
       (fields.FW === "RC" && fields.PROTOCOL !== "1") ||
       (!fields.FW && fields.VERSION !== "1") || !fields.VERSION) throw new Error("unsupported firmware protocol");
   firmware = { type: fields.FW || "RC", version: fields.VERSION, sensor: !!fields.FW };
@@ -471,14 +471,20 @@ function renderNav() {
     nav.append(button);
   });
 }
-const autoFields = [
-  ["Search left (%)",-100,100], ["Search right (%)",-100,100],
-  ["Attack initial speed (%)",0,100], ["Attack maximum speed (%)",0,100],
-  ["Attack ramp time (ms)",0,10000], ["Backoff reverse speed (%)",0,100],
-  ["Backoff reverse duration (ms)",0,10000], ["Backoff turn speed (%)",0,100],
-  ["Backoff turn duration (ms)",0,10000], ["Backoff pause (ms)",0,10000],
-  ["Edge threshold (% of starting surface reading)",1,99],
+const autoGroups = [
+  ["Search", [
+    ["Motor left (%)",-100,100], ["Motor right (%)",-100,100],
+  ]],
+  ["Backoff", [
+    ["Reverse speed (%)",0,100], ["Reverse duration (ms)",0,10000],
+    ["Turn speed (%)",0,100], ["Turn duration (ms)",0,10000],
+  ]],
+  ["Attack", [
+    ["Initial speed (%)",0,100], ["Ramp time (ms)",0,10000],
+    ["Maximum speed (%)",0,100],
+  ]],
 ];
+const autoFields = autoGroups.flatMap(([, fields]) => fields);
 const defenseFields = [
   ["Forward repetitions",0,100], ["Wait between moves (ms)",1,10000],
   ["Forward left (%)",0,100], ["Forward right (%)",0,100], ["Forward duration (ms)",1,10000],
@@ -519,7 +525,19 @@ async function showPage(page) {
       : "Enabled rows run from top to bottom, then search/attack starts. Positive = forward; negative = reverse; zero = stop.";
     const form = document.createElement("form");
     const inputs = [];
-    if (fields) {
+    if (page === "auto") {
+      let valueIndex = 0;
+      autoGroups.forEach(([title, groupFields]) => {
+        const group = document.createElement("fieldset"); group.className = "routine-group";
+        const legend = document.createElement("legend"); legend.textContent = title;
+        const grid = document.createElement("div"); grid.className = "tuning-grid";
+        groupFields.forEach(([label,min,max]) => {
+          const field = numberField(label,values[valueIndex++],min,max);
+          inputs.push(field.querySelector("input")); grid.append(field);
+        });
+        group.append(legend,grid); form.append(group);
+      });
+    } else if (fields) {
       const grid = document.createElement("div"); grid.className = "tuning-grid";
       fields.forEach(([label,min,max],i) => {
         const field = numberField(label,values[i],min,max); inputs.push(field.querySelector("input")); grid.append(field);
@@ -576,13 +594,13 @@ window.setInterval(async () => {
   try {
     const line = await sendCommand("GET SENSOR");
     if (!ready || currentPage !== "auto") return;
-    const [mask,left,right,start,dip,state,battery] = line.slice(7).split(" ").map(Number);
+    const [mask,left,right,start,dip,,battery] = line.slice(7).split(" ").map(Number);
     const target = document.querySelector("#sensorData"); target.replaceChildren();
     const rows = [
       ...["Left","Front left","Front centre","Front right","Right"].map((name,i) => [name, mask & (1<<i) ? "Detected" : "Clear"]),
       ["Edge left",left], ["Edge right",right], ["START / IR D2",start ? "HIGH" : "LOW"],
       ["DIP",dip.toString(2).padStart(3,"0").replaceAll("0","L").replaceAll("1","H")],
-      ["State",state === 99 ? "Configuration" : state === 98 ? "RC" : String(state)], ["Battery",`${battery.toFixed(2)} V`],
+      ["Battery",`${battery.toFixed(2)} V`],
     ];
     rows.forEach(([label,value]) => {
       const item = document.createElement("div"); const title = document.createElement("span");
