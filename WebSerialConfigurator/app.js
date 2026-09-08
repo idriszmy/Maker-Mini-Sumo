@@ -1,5 +1,5 @@
 const BAUD_RATE = 115200;
-const WEBUI_VERSION = "1.1.0";
+const WEBUI_VERSION = "1.2.0";
 const NEW_PORT_VALUE = "new";
 const COMMAND_TIMEOUT_MS = 2500;
 const BOARD_RESET_WAIT_MS = 2000;
@@ -21,6 +21,8 @@ const elements = {
   backwardRightSpeed: document.querySelector("#backwardRightSpeed"),
   forwardSaveState: document.querySelector("#forwardSaveState"),
   backwardSaveState: document.querySelector("#backwardSaveState"),
+  rcMapping: document.querySelector("#rcMapping"),
+  rcMappingSaveState: document.querySelector("#rcMappingSaveState"),
 };
 
 let connectionEpoch = 0;
@@ -53,6 +55,7 @@ function setConnectionState(connected) {
   elements.portSelect.disabled = connected;
   elements.forwardSlider.disabled = !connected;
   elements.backwardSlider.disabled = !connected;
+  elements.rcMapping.disabled = !connected || !firmware?.rcMapping;
   document.querySelector("#liveSensors").disabled = !connected || !firmware?.sensor;
   document.querySelector("#firmwareInfo").hidden = !connected;
   document.querySelector("#sessionHelp").hidden = !connected;
@@ -66,6 +69,8 @@ function setConnectionState(connected) {
   if (!connected) {
     setSaveState("forward", "Not connected");
     setSaveState("backward", "Not connected");
+    elements.rcMappingSaveState.textContent = "Not connected";
+    elements.rcMappingSaveState.dataset.state = "";
   }
 }
 
@@ -297,11 +302,24 @@ async function connect() {
 
   const fields = Object.fromEntries(hello.split(" ").slice(1).map((part) => part.split("=")));
   if (fields.DEVICE !== "MAKER_MINI_SUMO" || ![undefined, "RC", "AutoRC"].includes(fields.FW) ||
-      (fields.FW === "AutoRC" && fields.PROTOCOL !== "3") ||
-      (fields.FW === "RC" && fields.PROTOCOL !== "1") ||
+      (fields.FW === "AutoRC" && fields.PROTOCOL !== "4") ||
+      (fields.FW === "RC" && fields.PROTOCOL !== "2") ||
       (!fields.FW && fields.VERSION !== "1") || !fields.VERSION) throw new Error("unsupported firmware protocol");
-  firmware = { type: fields.FW || "RC", version: fields.VERSION, sensor: !!fields.FW };
+  firmware = { type: fields.FW || "RC", version: fields.VERSION, sensor: !!fields.FW, rcMapping: !!fields.FW };
   if (firmware.type === "AutoRC") await sendCommand("CONFIG ON");
+  if (firmware.rcMapping) {
+    setSystemMessage("Reading RC channel mapping…");
+    const rcConfig = await sendCommand("GET RC");
+    const rcMatch = rcConfig.match(/^RC MAP=([01])$/);
+    if (!rcMatch) throw new Error("invalid RC channel mapping response");
+    elements.rcMapping.value = rcMatch[1];
+    elements.rcMappingSaveState.textContent = "Saved";
+    elements.rcMappingSaveState.dataset.state = "saved";
+  } else {
+    elements.rcMapping.value = "0";
+    elements.rcMappingSaveState.textContent = "Update firmware to change mapping";
+    elements.rcMappingSaveState.dataset.state = "";
+  }
   document.querySelector("#firmwareInfo").textContent = `MakerMiniSumo_${firmware.type} · Version ${firmware.version}`;
   document.querySelector("#alignmentHelp").textContent = firmware.type === "AutoRC"
     ? "Release a slider to save. Disconnect USB and reset the robot before testing alignment."
@@ -419,6 +437,25 @@ elements.backwardSlider.addEventListener("input", (event) => {
 
 elements.forwardSlider.addEventListener("change", () => saveSlider("forward"));
 elements.backwardSlider.addEventListener("change", () => saveSlider("backward"));
+elements.rcMapping.addEventListener("change", async () => {
+  if (!ready) return;
+  const value = elements.rcMapping.value;
+  elements.rcMapping.disabled = true;
+  elements.rcMappingSaveState.textContent = "Saving…";
+  elements.rcMappingSaveState.dataset.state = "";
+  try {
+    await sendCommand(`SAVE RC ${value}`);
+    elements.rcMappingSaveState.textContent = "Saved";
+    elements.rcMappingSaveState.dataset.state = "saved";
+    setSystemMessage("RC channel mapping saved to EEPROM.");
+  } catch (error) {
+    elements.rcMappingSaveState.textContent = "Save failed";
+    elements.rcMappingSaveState.dataset.state = "error";
+    setSystemMessage(`Unable to save RC mapping: ${error.message}`);
+  } finally {
+    elements.rcMapping.disabled = !ready || !firmware?.rcMapping;
+  }
+});
 
 if (!("serial" in navigator)) {
   elements.browserNotice.hidden = false;
@@ -447,10 +484,15 @@ function responseMatcher(command) {
   if (command === "CONFIG ON") return line => line === "OK CONFIG";
   if (command === "GET CONFIG") return line => /^CONFIG F=-?\d+ B=-?\d+$/.test(line);
   if (command === "GET SENSOR") return line => /^SENSOR( -?\d+(\.\d+)?){7}$/.test(line);
+  if (command === "GET RC") return line => /^RC MAP=[01]$/.test(line);
   if (command.startsWith("GET ")) return line => line.startsWith(command.slice(4) + " ");
   if (/^SAVE [FB] /.test(command)) {
     const [, direction, value] = command.split(" ");
     return line => line === `OK SAVED ${direction}=${value}`;
+  }
+  if (/^SAVE RC [01]$/.test(command)) {
+    const value = command.at(-1);
+    return line => line === `OK SAVED RC=${value}`;
   }
   const parts = command.split(" ");
   const expected = `OK SAVED ${parts[1]}${parts[1] === "STR" ? ` ${parts[2]}` : ""}`;

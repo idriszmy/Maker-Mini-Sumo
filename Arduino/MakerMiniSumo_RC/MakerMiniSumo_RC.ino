@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Maker Mini Sumo - RC Only
+ * Maker Mini Sumo - RC Only 1.2.0
  *
  * Connections:
  * - RC throttle/speed  <-> GPIO1
@@ -47,8 +47,11 @@ constexpr int EEPROM_MAGIC_ADDRESS = 16;
 constexpr int EEPROM_VERSION_ADDRESS = 17;
 constexpr int EEPROM_FORWARD_TRIM_ADDRESS = 18;
 constexpr int EEPROM_BACKWARD_TRIM_ADDRESS = 19;
+constexpr int EEPROM_RC_MAPPING_ADDRESS = 20;
+constexpr int EEPROM_RC_MAPPING_MAGIC_ADDRESS = 21;
 constexpr uint8_t EEPROM_MAGIC = 0xA7;
 constexpr uint8_t EEPROM_VERSION = 1;
+constexpr uint8_t EEPROM_RC_MAPPING_MAGIC = 0x5C;
 
 constexpr unsigned long SAVE_HOLD_MS = 2000UL;
 constexpr unsigned long SAVE_FLASH_MS = 1000UL;
@@ -64,6 +67,7 @@ constexpr int BUZZER_SAVE_NOTE_3 = NOTE_C6;
 
 int8_t forwardTrim = 0;
 int8_t backwardTrim = 0;
+bool rcChannelsSwapped = false;
 
 // Pulse data is captured by the Port C pin-change interrupt.
 volatile uint32_t rcSpeedRiseAt = 0;
@@ -145,6 +149,9 @@ void setup()
   beginRcCapture();
 
   loadAlignment();
+  if (EEPROM.read(EEPROM_RC_MAPPING_MAGIC_ADDRESS) == EEPROM_RC_MAPPING_MAGIC) {
+    rcChannelsSwapped = EEPROM.read(EEPROM_RC_MAPPING_ADDRESS) == 1;
+  }
   MakerSumo.stop();
   digitalWrite(LED, LOW);
   playPowerOnSound();
@@ -169,8 +176,10 @@ void loop()
   float steeringPercent;
 
   // Failsafe: stop when either RC channel has no valid pulse.
-  if (!readRcChannel(RC_SPEED, speedPercent) ||
-      !readRcChannel(RC_STEERING, steeringPercent)) {
+  uint8_t speedPin = rcChannelsSwapped ? RC_STEERING : RC_SPEED;
+  uint8_t steeringPin = rcChannelsSwapped ? RC_SPEED : RC_STEERING;
+  if (!readRcChannel(speedPin, speedPercent) ||
+      !readRcChannel(steeringPin, steeringPercent)) {
     MakerSumo.stop();
     updateLed(mode, false);
     return;
@@ -479,7 +488,7 @@ void processSerial()
 void handleSerialCommand(char *command)
 {
   if (strcmp(command, "HELLO") == 0) {
-    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO FW=RC VERSION=1.1.0 PROTOCOL=1"));
+    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO FW=RC VERSION=1.2.0 PROTOCOL=2"));
     return;
   }
 
@@ -498,6 +507,23 @@ void handleSerialCommand(char *command)
 
   if (strcmp(command, "GET CONFIG") == 0) {
     printConfig();
+    return;
+  }
+
+  if (strcmp(command, "GET RC") == 0) {
+    Serial.print(F("RC MAP="));
+    Serial.println(rcChannelsSwapped ? 1 : 0);
+    return;
+  }
+
+  if (strcmp(command, "SAVE RC 0") == 0 || strcmp(command, "SAVE RC 1") == 0) {
+    MakerSumo.stop();
+    rcChannelsSwapped = command[8] == '1';
+    EEPROM.update(EEPROM_RC_MAPPING_ADDRESS, rcChannelsSwapped ? 1 : 0);
+    EEPROM.update(EEPROM_RC_MAPPING_MAGIC_ADDRESS, EEPROM_RC_MAPPING_MAGIC);
+    playSaveSound();
+    Serial.print(F("OK SAVED RC="));
+    Serial.println(rcChannelsSwapped ? 1 : 0);
     return;
   }
 

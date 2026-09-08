@@ -1,4 +1,4 @@
-// Maker Mini Sumo AutoRC 1.1.1. DIP 0-6 Auto, 7 RC. START/IR share D2.
+// Maker Mini Sumo AutoRC 1.2.0. DIP 0-6 Auto, 7 RC. START/IR share D2.
 #include <EEPROM.h>
 #include <avr/interrupt.h>
 #include "CytronMakerSumo.h"
@@ -145,6 +145,9 @@ static_assert(sizeof(Settings) == 308, "EEPROM schema size changed; bump its ver
 Settings config;
 constexpr int CONFIG_ADDRESS = 32;
 constexpr uint8_t CONFIG_VERSION = 2;
+constexpr uint8_t EEPROM_RC_MAPPING_ADDRESS = 20;
+constexpr uint8_t EEPROM_RC_MAPPING_MAGIC_ADDRESS = 21;
+constexpr uint8_t EEPROM_RC_MAPPING_MAGIC = 0x5C;
 constexpr uint8_t EDGE_SENSITIVITY_MIN_PERCENT = 25;
 constexpr uint8_t EDGE_SENSITIVITY_MAX_PERCENT = 75;
 constexpr uint16_t BACKOFF_PAUSE_MS = 50;
@@ -157,6 +160,7 @@ RunState state = IDENTIFY;
 uint32_t stateAt = 0, inputAt = 0, identifyStartedAt = 0, attackAt = 0;
 bool initialHigh = true, buttonStart = true, inputArmed = false;
 bool configSession = false, attacking = false;
+bool rcChannelsSwapped = false;
 uint8_t selectedMode = 0, stepIndex = 0, defenseCount = 0;
 bool turnRight = true;
 int edgeLeftThreshold = 0, edgeRightThreshold = 0;
@@ -286,6 +290,9 @@ void loadSettings() {
     if (abs(forwardTrim) > 25) forwardTrim = 0;
     if (abs(backwardTrim) > 25) backwardTrim = 0;
   }
+  if (EEPROM.read(EEPROM_RC_MAPPING_MAGIC_ADDRESS) == EEPROM_RC_MAPPING_MAGIC) {
+    rcChannelsSwapped = EEPROM.read(EEPROM_RC_MAPPING_ADDRESS) == 1;
+  }
 }
 void startOpening() {
   // Sample the dark ring surface at start. POT then trims threshold sensitivity.
@@ -302,7 +309,9 @@ void runRobot() {
   if (configSession) { stopRobot(); return; }
   if (selectedMode == 7) {
     float speed, steering;
-    if (!readRcChannel(RC_SPEED,speed) || !readRcChannel(RC_STEERING,steering)) { stopRobot(); return; }
+    uint8_t speedPin = rcChannelsSwapped ? RC_STEERING : RC_SPEED;
+    uint8_t steeringPin = rcChannelsSwapped ? RC_SPEED : RC_STEERING;
+    if (!readRcChannel(speedPin,speed) || !readRcChannel(steeringPin,steering)) { stopRobot(); return; }
     int left = constrain((int)((speed+steering)*255),-255,255);
     int right = constrain((int)((speed-steering)*255),-255,255);
     // Preserve RC's throttle-based trim behaviour, including untrimmed neutral pivots.
@@ -411,7 +420,7 @@ bool parseValues(int16_t *values, uint8_t count) {
 }
 void handleCommand() {
   if (!strcmp(serialLine,"HELLO")) {
-    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.1.1 PROTOCOL=3")); return;
+    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.2.0 PROTOCOL=4")); return;
   }
   if (!strcmp(serialLine,"CONFIG ON")) {
     configSession = true; stopRobot(); Serial.println(F("OK CONFIG")); return;
@@ -425,6 +434,9 @@ void handleCommand() {
   if (!strcmp(serialLine,"GET CONFIG")) {
     Serial.print(F("CONFIG F=")); Serial.print(forwardTrim); Serial.print(F(" B=")); Serial.println(backwardTrim); return;
   }
+  if (!strcmp(serialLine,"GET RC")) {
+    Serial.print(F("RC MAP=")); Serial.println(rcChannelsSwapped ? 1 : 0); return;
+  }
   if (!strcmp(serialLine,"GET AUTO")) { Serial.print(F("AUTO")); printValues(config.behaviour,AUTO_FIELDS); return; }
   if (!strcmp(serialLine,"GET DEF")) { Serial.print(F("DEF")); printValues(config.defense,5); return; }
   char *action = strtok(serialLine," "); char *group = strtok(NULL," ");
@@ -432,6 +444,14 @@ void handleCommand() {
   bool save = !strcmp(action,"SAVE");
   if (save && !configSession) { Serial.println(F("ERROR CONFIG_REQUIRED")); return; }
   int16_t values[20];
+  if (save && !strcmp(group,"RC")) {
+    if (!parseValues(values,1) || (values[0] != 0 && values[0] != 1)) { Serial.println(F("ERROR VALUE")); return; }
+    rcChannelsSwapped = values[0] == 1;
+    EEPROM.update(EEPROM_RC_MAPPING_ADDRESS, rcChannelsSwapped ? 1 : 0);
+    EEPROM.update(EEPROM_RC_MAPPING_MAGIC_ADDRESS, EEPROM_RC_MAPPING_MAGIC);
+    startBuzzer(true);
+    Serial.print(F("OK SAVED RC=")); Serial.println(rcChannelsSwapped ? 1 : 0); return;
+  }
   if (save && (!strcmp(group,"F") || !strcmp(group,"B"))) {
     char direction = group[0];
     if (!parseValues(values,1) || abs(values[0]) > 25) { Serial.println(F("ERROR VALUE")); return; }

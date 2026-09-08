@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#101416">
     <meta name="description" content="Motor alignment configurator for Maker Mini Sumo">
     <title>Maker Mini Sumo Configurator</title>
-    <link rel="stylesheet" href="styles.css?v=1.1.0">
+    <link rel="stylesheet" href="styles.css?v=1.2.0">
   </head>
   <body>
     <main class="app-shell">
@@ -15,7 +15,7 @@
           <p class="eyebrow">Cytron Maker Mini Sumo</p>
           <h1>Robot Configurator</h1>
           <p class="intro">Tune your Maker Mini Sumo over USB serial.</p>
-          <p class="webui-version">WebUI 1.1.0</p>
+          <p class="webui-version">WebUI 1.2.0</p>
         </div>
         <div class="connection-badge" id="connectionBadge" data-state="offline">
           <span class="status-dot" aria-hidden="true"></span>
@@ -57,9 +57,27 @@
         </div>
       </section>
 
-      <section class="alignment-section" aria-labelledby="alignmentHeading">
+      <section class="alignment-section" aria-labelledby="rcMappingHeading">
         <div class="section-heading">
           <span class="step-number">02</span>
+          <div>
+            <h2 id="rcMappingHeading">RC channel mapping</h2>
+            <p>Choose which receiver channel controls throttle and steering.</p>
+          </div>
+        </div>
+        <div class="mapping-controls">
+          <label class="field-label" for="rcMapping">Channel assignment</label>
+          <select id="rcMapping" disabled>
+            <option value="0">GPIO1 = Throttle · GPIO2 = Steering</option>
+            <option value="1">GPIO1 = Steering · GPIO2 = Throttle</option>
+          </select>
+          <span class="save-state" id="rcMappingSaveState">Not connected</span>
+        </div>
+      </section>
+
+      <section class="alignment-section" aria-labelledby="alignmentHeading">
+        <div class="section-heading">
+          <span class="step-number">03</span>
           <div>
             <h2 id="alignmentHeading">Align motor speed</h2>
             <p id="alignmentHelp">Connect the robot to read and save motor alignment.</p>
@@ -148,6 +166,6 @@
       </footer>
     </main>
 
-    <script src="app.js?v=1.1.0"></script>
+    <script src="app.js?v=1.2.0"></script>
   </body>
 </html>

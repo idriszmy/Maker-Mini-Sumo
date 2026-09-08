@@ -2,7 +2,7 @@
 #include <cassert>
 #include <iostream>
 void resetTest() {
- defaults(); configSession=false; selectedMode=0; buttonStart=true; inputArmed=false; attacking=false;
+ defaults(); configSession=false; selectedMode=0; buttonStart=true; inputArmed=false; attacking=false; rcChannelsSwapped=false;
  testNow=100; forwardTrim=backwardTrim=0;
  for(int i=0;i<32;i++){digitalPins[i]=HIGH;analogPins[i]=800;}
  edgeLeftThreshold=edgeRightThreshold=400; stopRobot(); enterState(FIGHT);
@@ -43,6 +43,9 @@ int main(){
  // RC neutral, full throttle, loss and invalid pulse.
  resetTest();selectedMode=7;rcSpeedPulseWidth=2000;rcSteeringPulseWidth=1500;rcSpeedLastPulseAt=rcSteeringLastPulseAt=micros();runRobot();assert(MakerSumo.motors[0]==255);testNow+=31;runRobot();assert(MakerSumo.motors[0]==0);
  rcSpeedLastPulseAt=rcSteeringLastPulseAt=micros();rcSpeedPulseWidth=500;runRobot();assert(MakerSumo.motors[0]==0);
+ // Swapped mapping reads GPIO2 as throttle and GPIO1 as steering.
+ resetTest();selectedMode=7;rcChannelsSwapped=true;rcSpeedPulseWidth=1500;rcSteeringPulseWidth=2000;
+ rcSpeedLastPulseAt=rcSteeringLastPulseAt=micros();runRobot();assert(MakerSumo.motors[0]==255 && MakerSumo.motors[1]==255);
  // Complete saves, range validation, checksum and lock.
  resetTest();command("SAVE F 10");assert(Serial.output=="ERROR CONFIG_REQUIRED\n");command("CONFIG ON");runRobot();assert(MakerSumo.motors[0]==0);
  command("SAVE DEF 2 1500 40 45 60");assert(Serial.output=="OK SAVED DEF\n" && config.defense[0]==2);
@@ -64,6 +67,10 @@ int main(){
  command("SAVE F 26");assert(buzzerLength==0);
  command("GET CONFIG");assert(buzzerLength==0);
  command("SAVE DEF 2 1500 40 45 60");assert(buzzerLength==5);
+ command("SAVE RC 1");assert(Serial.output=="OK SAVED RC=1\n" && rcChannelsSwapped);
+ rcChannelsSwapped=false;loadSettings();assert(rcChannelsSwapped);
+ command("GET RC");assert(Serial.output=="RC MAP=1\n");
+ command("SAVE RC 2");assert(Serial.output=="ERROR VALUE\n" && rcChannelsSwapped);
  // RC failsafe still runs while a sound is playing.
  configSession=false;selectedMode=7;rcSpeedLastPulseAt=rcSteeringLastPulseAt=0;
  MakerSumo.motors[0]=255;loop();assert(MakerSumo.motors[0]==0);

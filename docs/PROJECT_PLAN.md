@@ -327,12 +327,12 @@ RC-controlled alignment workflow; its live sensor requests do not lock motors.
 115200 baud, newline-delimited text. Firmware identifiers:
 
 ```text
-OK DEVICE=MAKER_MINI_SUMO FW=RC VERSION=1.1.0 PROTOCOL=1
-OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.1.0 PROTOCOL=3
+OK DEVICE=MAKER_MINI_SUMO FW=RC VERSION=1.2.0 PROTOCOL=2
+OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.2.0 PROTOCOL=4
 ```
 
 The WebUI also supports the previous RC handshake `VERSION=1` without `FW`, with
-live sensors disabled. Auto pages require recognized AutoRC protocol 3.
+live sensors disabled. Auto pages require recognized AutoRC protocol 4.
 
 ```text
 CONFIG ON                  -> OK CONFIG
@@ -432,3 +432,27 @@ chooses the input type. After classification, firmware must observe the chosen
 input inactive before it can accept a start event. This prevents a startup level
 transition from being mistaken for an active-low START button press. Button
 presses retain 25 ms debounce. The protocol and EEPROM schema are unchanged.
+
+### RC/AutoRC 1.2.0 / WebUI 1.2.0 — channel mapping
+
+Main includes an RC channel mapping selector. Mapping 0 is the default:
+GPIO1 throttle and GPIO2 steering. Mapping 1 swaps the roles: GPIO1 steering
+and GPIO2 throttle. The pin-change ISR continues capturing both physical pins;
+the saved mapping only chooses which captured pulse becomes throttle or steering.
+The same 30 ms timeout and pulse validation apply in both mappings.
+
+The mapping is stored independently at EEPROM address 20, with marker `0x5C`
+at address 21. An absent or invalid marker selects mapping 0, so existing robots
+retain the original assignment. Alignment at 16–19 and Auto settings at 32 onward
+are not reset. Accepted mapping saves stop the motors and play save confirmation.
+AutoRC requires configuration mode, like its other saves.
+
+```text
+GET RC                     -> RC MAP=0
+SAVE RC 0                  -> OK SAVED RC=0
+SAVE RC 1                  -> OK SAVED RC=1
+```
+
+RC protocol 2 and AutoRC protocol 4 advertise this capability. Legacy RC
+firmware can still connect, but the mapping selector remains disabled until its
+firmware is updated. Both current firmware builds compile for Arduino Uno.

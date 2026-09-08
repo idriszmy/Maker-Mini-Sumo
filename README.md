@@ -21,6 +21,9 @@ start. WebUI 1.1.0 shows live sensors without the internal state value.
 AutoRC 1.1.1 waits for the shared START/IR input to settle at power-on and
 requires an idle reading before accepting a start event.
 
+RC and AutoRC 1.2.0 let WebUI 1.2.0 save either GPIO1 throttle/GPIO2 steering
+or the swapped GPIO1 steering/GPIO2 throttle assignment.
+
 START/button and IR share D2: release the button / keep IR at STOP when powering
 on or resetting. AutoRC locks motors during WebUI configuration; save, disconnect
 USB and reset before driving. Open the sketch directly from this repository.

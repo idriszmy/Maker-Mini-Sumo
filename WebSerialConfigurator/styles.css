@@ -449,6 +449,8 @@ input[type="range"]::-moz-range-thumb {
 .sensor-grid span,.sensor-grid strong { display:block; }
 .sensor-grid span { color:var(--muted); font-size:.8rem; margin-bottom:8px; }
 .tuning-field { display:flex; flex-direction:column; gap:8px; font-size:.85rem; }
+.mapping-controls { display:grid; grid-template-columns:minmax(240px,1fr) auto; gap:8px 16px; align-items:center; }
+.mapping-controls .field-label { grid-column:1 / -1; margin:0; }
 .routine-group { border:1px solid var(--line); border-radius:12px; margin:20px 0; padding:0 18px; }
 .routine-group legend { color:var(--accent); font-weight:800; padding:0 8px; }
 input[type="number"] { width:100%; padding:12px; border:1px solid var(--line); border-radius:8px; background:var(--panel-raised); color:var(--text); }
