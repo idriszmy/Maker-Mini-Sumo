@@ -28,6 +28,9 @@ AutoRC and WebUI 1.3.0 simplify connection to one button and add raw ADC plus
 25-75% IR sensitivity to live sensors. WebUI 1.3.1 places the firmware version
 beside that button and adds Disconnect to every Auto page.
 
+AutoRC and WebUI 1.4.0 show the physical GPIO1/GPIO2 RC pulse widths in live
+sensors, making receiver signal troubleshooting possible before a match.
+
 START/button and IR share D2: release the button / keep IR at STOP when powering
 on or resetting. AutoRC locks motors during WebUI configuration; save, disconnect
 USB and reset before driving. Open the sketch directly from this repository.

@@ -43,6 +43,9 @@ int main(){
  // RC neutral, full throttle, loss and invalid pulse.
  resetTest();selectedMode=7;rcSpeedPulseWidth=2000;rcSteeringPulseWidth=1500;rcSpeedLastPulseAt=rcSteeringLastPulseAt=micros();runRobot();assert(MakerSumo.motors[0]==255);testNow+=31;runRobot();assert(MakerSumo.motors[0]==0);
  rcSpeedLastPulseAt=rcSteeringLastPulseAt=micros();rcSpeedPulseWidth=500;runRobot();assert(MakerSumo.motors[0]==0);
+ resetTest();rcSpeedPulseWidth=1500;rcSteeringPulseWidth=1520;rcSpeedLastPulseAt=rcSteeringLastPulseAt=micros();
+ command("GET SENSOR");assert(Serial.output.find(" 1500 1520 ")!=std::string::npos);
+ testNow+=31;command("GET SENSOR");assert(Serial.output.find(" 0 0 ")!=std::string::npos);
  // Swapped mapping reads GPIO2 as throttle and GPIO1 as steering.
  resetTest();selectedMode=7;rcChannelsSwapped=true;rcSpeedPulseWidth=1500;rcSteeringPulseWidth=2000;
  rcSpeedLastPulseAt=rcSteeringLastPulseAt=micros();runRobot();assert(MakerSumo.motors[0]==255 && MakerSumo.motors[1]==255);

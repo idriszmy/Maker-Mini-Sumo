@@ -28,6 +28,9 @@ Auto page.
 
 WebUI 1.3.2 places that Disconnect control inside each Auto/Strategy panel.
 
+AutoRC and WebUI 1.4.0 add valid RC pulse widths for physical GPIO1 and GPIO2
+to live sensors. A missing, stale or out-of-range pulse is shown as No signal.
+
 The protocol, field ranges, EEPROM layout and verification status are maintained
 in [the project specification](../docs/PROJECT_PLAN.md#autorc-100--implementation-september-2026).
 

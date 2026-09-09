@@ -27,6 +27,9 @@ AutoRC dan WebUI 1.3.0 memudahkan sambungan kepada satu button serta menambah
 raw ADC dan sensitiviti IR 25-75% pada live sensor. WebUI 1.3.1 meletakkan versi
 firmware di sebelah button tersebut dan menambah Disconnect pada setiap halaman Auto.
 
+AutoRC dan WebUI 1.4.0 memaparkan pulse width RC fizikal GPIO1/GPIO2 pada live
+sensor untuk memudahkan pemeriksaan signal receiver sebelum pertandingan.
+
 Button START dan IR berkongsi D2: lepaskan button / pastikan IR pada STOP ketika
 power-on atau reset. AutoRC mengunci motor sepanjang konfigurasi WebUI; simpan,
 disconnect USB dan reset sebelum menguji gerakan. Buka sketch terus daripada

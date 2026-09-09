@@ -1,5 +1,5 @@
 const BAUD_RATE = 115200;
-const WEBUI_VERSION = "1.3.2";
+const WEBUI_VERSION = "1.4.0";
 const COMMAND_TIMEOUT_MS = 2500;
 const BOARD_RESET_WAIT_MS = 2000;
 const HELLO_ATTEMPTS = 3;
@@ -245,7 +245,7 @@ async function connect() {
 
   const fields = Object.fromEntries(hello.split(" ").slice(1).map((part) => part.split("=")));
   if (fields.DEVICE !== "MAKER_MINI_SUMO" || ![undefined, "RC", "AutoRC"].includes(fields.FW) ||
-      (fields.FW === "AutoRC" && fields.PROTOCOL !== "5") ||
+      (fields.FW === "AutoRC" && fields.PROTOCOL !== "6") ||
       (fields.FW === "RC" && fields.PROTOCOL !== "2") ||
       (!fields.FW && fields.VERSION !== "1") || !fields.VERSION) throw new Error("unsupported firmware protocol");
   firmware = { type: fields.FW || "RC", version: fields.VERSION, sensor: !!fields.FW, rcMapping: !!fields.FW };
@@ -417,7 +417,7 @@ function responseMatcher(command) {
   if (command === "HELLO") return line => line.startsWith("OK DEVICE=");
   if (command === "CONFIG ON") return line => line === "OK CONFIG";
   if (command === "GET CONFIG") return line => /^CONFIG F=-?\d+ B=-?\d+$/.test(line);
-  if (command === "GET SENSOR") return line => /^SENSOR( -?\d+(\.\d+)?){8}$/.test(line);
+  if (command === "GET SENSOR") return line => /^SENSOR( -?\d+(\.\d+)?){10}$/.test(line);
   if (command === "GET RC") return line => /^RC MAP=[01]$/.test(line);
   if (command.startsWith("GET ")) return line => line.startsWith(command.slice(4) + " ");
   if (/^SAVE [FB] /.test(command)) {
@@ -571,13 +571,15 @@ window.setInterval(async () => {
   try {
     const line = await sendCommand("GET SENSOR");
     if (!ready || currentPage !== "auto") return;
-    const [mask,left,right,pot,start,dip,,battery] = line.slice(7).split(" ").map(Number);
+    const [mask,left,right,pot,gpio1,gpio2,start,dip,,battery] = line.slice(7).split(" ").map(Number);
     const sensitivity = Math.floor(25 + pot * 50 / 1023);
     const target = document.querySelector("#sensorData"); target.replaceChildren();
     const rows = [
       ...["Left","Front left","Front centre","Front right","Right"].map((name,i) => [name, mask & (1<<i) ? "Detected" : "Clear"]),
       ["Edge left raw ADC",left], ["Edge right raw ADC",right],
       ["Trim raw ADC",pot], ["IR sensitivity",`${sensitivity}%`],
+      ["GPIO1 RC pulse",gpio1 ? `${gpio1} µs` : "No signal"],
+      ["GPIO2 RC pulse",gpio2 ? `${gpio2} µs` : "No signal"],
       ["START / IR D2",start ? "HIGH" : "LOW"],
       ["DIP",dip.toString(2).padStart(3,"0").replaceAll("0","L").replaceAll("1","H")],
       ["Battery",`${battery.toFixed(2)} V`],

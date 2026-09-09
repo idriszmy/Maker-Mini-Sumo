@@ -1,4 +1,4 @@
-// Maker Mini Sumo AutoRC 1.3.0. DIP 0-6 Auto, 7 RC. START/IR share D2.
+// Maker Mini Sumo AutoRC 1.4.0. DIP 0-6 Auto, 7 RC. START/IR share D2.
 #include <EEPROM.h>
 #include <avr/interrupt.h>
 #include "CytronMakerSumo.h"
@@ -33,6 +33,7 @@ volatile uint8_t rcLastPortState = 0;
 
 
 void beginRcCapture();
+uint16_t readRcPulse(uint8_t pin);
 bool readRcChannel(uint8_t pin, float &value);
 ISR(PCINT1_vect)
 {
@@ -90,8 +91,7 @@ void beginRcCapture()
   interrupts();
 }
 
-bool readRcChannel(uint8_t pin, float &value)
-{
+uint16_t readRcPulse(uint8_t pin) {
   uint16_t pulseWidth;
   uint32_t lastPulseAt;
 
@@ -110,9 +110,15 @@ bool readRcChannel(uint8_t pin, float &value)
   uint32_t now = micros();
   if (lastPulseAt == 0 || now - lastPulseAt > RC_TIMEOUT_US ||
       pulseWidth < RC_VALID_MIN_US || pulseWidth > RC_VALID_MAX_US) {
-    return false;
+    return 0;
   }
 
+  return pulseWidth;
+}
+
+bool readRcChannel(uint8_t pin, float &value) {
+  uint16_t pulseWidth = readRcPulse(pin);
+  if (!pulseWidth) return false;
   value = (float)((long)pulseWidth - RC_NEUTRAL_US) /
           (float)(RC_RANGE_US / 2);
   value = constrain(value, -1.0f, 1.0f);
@@ -420,7 +426,7 @@ bool parseValues(int16_t *values, uint8_t count) {
 }
 void handleCommand() {
   if (!strcmp(serialLine,"HELLO")) {
-    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.3.0 PROTOCOL=5")); return;
+    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.4.0 PROTOCOL=6")); return;
   }
   if (!strcmp(serialLine,"CONFIG ON")) {
     configSession = true; stopRobot(); Serial.println(F("OK CONFIG")); return;
@@ -428,6 +434,7 @@ void handleCommand() {
   if (!strcmp(serialLine,"GET SENSOR")) {
     Serial.print(F("SENSOR ")); Serial.print(opponents());
     Serial.print(' '); Serial.print(analogRead(EDGE_L)); Serial.print(' '); Serial.print(analogRead(EDGE_R)); Serial.print(' '); Serial.print(analogRead(POT));
+    Serial.print(' '); Serial.print(readRcPulse(RC_SPEED)); Serial.print(' '); Serial.print(readRcPulse(RC_STEERING));
     Serial.print(' '); Serial.print(digitalRead(START)); Serial.print(' '); Serial.print(MakerSumo.readDipSwitch());
     Serial.print(' '); Serial.print(configSession ? 99 : state); Serial.print(' '); Serial.println(MakerSumo.readBatteryVoltage(),2); return;
   }

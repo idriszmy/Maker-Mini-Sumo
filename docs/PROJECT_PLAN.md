@@ -326,15 +326,15 @@ RC-controlled alignment workflow; its live sensor requests do not lock motors.
 
 ```text
 OK DEVICE=MAKER_MINI_SUMO FW=RC VERSION=1.2.0 PROTOCOL=2
-OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.3.0 PROTOCOL=5
+OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.4.0 PROTOCOL=6
 ```
 
 The WebUI also supports the previous RC handshake `VERSION=1` without `FW`, with
-live sensors disabled. Auto pages require recognized AutoRC protocol 5.
+live sensors disabled. Auto pages require recognized AutoRC protocol 6.
 
 ```text
 CONFIG ON                  -> OK CONFIG
-GET SENSOR                 -> SENSOR mask edgeL edgeR pot d2 dip state batteryV
+GET SENSOR                 -> SENSOR mask edgeL edgeR pot gpio1Us gpio2Us d2 dip state batteryV
 GET AUTO                   -> AUTO <9 integers>
 SAVE AUTO <9 integers>      -> OK SAVED AUTO
 GET DEF                    -> DEF <5 integers>
@@ -451,7 +451,7 @@ SAVE RC 0                  -> OK SAVED RC=0
 SAVE RC 1                  -> OK SAVED RC=1
 ```
 
-RC protocol 2 and AutoRC protocol 5 advertise this capability. Legacy RC
+RC protocol 2 and AutoRC protocol 6 advertise this capability. Legacy RC
 firmware can still connect, but the mapping selector remains disabled until its
 firmware is updated. Both current firmware builds compile for Arduino Uno.
 
@@ -465,3 +465,10 @@ sensitivity 25-75%.
 WebUI 1.3.1 displays the connected firmware version beside Connect/Disconnect.
 Every Auto page also provides a Disconnect button at its top right.
 WebUI 1.3.2 moves this control into the top-right corner of the page panel.
+
+### AutoRC 1.4.0 / WebUI 1.4.0 — RC signal telemetry
+
+Live sensors report the most recent valid pulse width for physical GPIO1 and
+GPIO2 in microseconds. Firmware returns zero when a channel has no completed
+pulse, is older than 30 ms or lies outside 750-2250 µs; WebUI displays this as
+`No signal`. These physical readings do not change when channel mapping is swapped.
