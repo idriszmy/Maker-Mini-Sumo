@@ -173,9 +173,17 @@ h3 {
 }
 
 .control-row {
-  display: grid;
-  grid-template-columns: minmax(180px, 1fr) auto auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
+}
+
+.port-info {
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
 select,
@@ -421,7 +429,6 @@ input[type="range"]::-moz-range-thumb {
     padding: 18px;
   }
 
-  .control-row,
   .alignment-grid {
     grid-template-columns: 1fr;
   }

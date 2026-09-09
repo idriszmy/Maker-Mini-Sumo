@@ -140,17 +140,15 @@ dengan alamat `0-3` yang digunakan oleh CytronMakerSumo untuk edge sensor.
 
 - Chrome atau Edge desktop.
 - HTTPS diperlukan pada production; `localhost` digunakan semasa development.
-- Arduino Serial Monitor mesti ditutup sebelum WebUI membuka port.
+- Pastikan tiada aplikasi lain sedang menggunakan serial port robot.
 - Browser permission diberi oleh pengguna melalui device chooser.
 
 ### Connection UI
 
 WebUI menyediakan:
 
-- Dropdown senarai serial port yang pernah diberi permission.
-- `Refresh` untuk memuat semula senarai port yang telah dibenarkan.
-- Pilihan `Select new port...` untuk membuka browser device chooser.
-- `Connect` dan `Disconnect`.
+- Satu button `Connect` / `Disconnect`; `Connect` membuka browser device chooser.
+- USB VID dan PID dipaparkan di sebelah button selepas sambungan berjaya.
 - Connection state dan mesej error yang mudah difahami.
 
 Selepas sambungan berjaya:
@@ -328,15 +326,15 @@ RC-controlled alignment workflow; its live sensor requests do not lock motors.
 
 ```text
 OK DEVICE=MAKER_MINI_SUMO FW=RC VERSION=1.2.0 PROTOCOL=2
-OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.2.0 PROTOCOL=4
+OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.3.0 PROTOCOL=5
 ```
 
 The WebUI also supports the previous RC handshake `VERSION=1` without `FW`, with
-live sensors disabled. Auto pages require recognized AutoRC protocol 4.
+live sensors disabled. Auto pages require recognized AutoRC protocol 5.
 
 ```text
 CONFIG ON                  -> OK CONFIG
-GET SENSOR                 -> SENSOR mask edgeL edgeR d2 dip state batteryV
+GET SENSOR                 -> SENSOR mask edgeL edgeR pot d2 dip state batteryV
 GET AUTO                   -> AUTO <9 integers>
 SAVE AUTO <9 integers>      -> OK SAVED AUTO
 GET DEF                    -> DEF <5 integers>
@@ -453,6 +451,14 @@ SAVE RC 0                  -> OK SAVED RC=0
 SAVE RC 1                  -> OK SAVED RC=1
 ```
 
-RC protocol 2 and AutoRC protocol 4 advertise this capability. Legacy RC
+RC protocol 2 and AutoRC protocol 5 advertise this capability. Legacy RC
 firmware can still connect, but the mapping selector remains disabled until its
 firmware is updated. Both current firmware builds compile for Arduino Uno.
+
+### AutoRC 1.3.0 / WebUI 1.3.0 — connection and sensitivity telemetry
+
+Main opens the browser serial-port chooser directly from the Connect button.
+After a successful connection, the selected port's USB VID and PID appear beside
+Connect/Disconnect. Live sensors add the potentiometer raw ADC reading. WebUI
+uses the same integer conversion as firmware, mapping ADC 0-1023 to IR edge
+sensitivity 25-75%.

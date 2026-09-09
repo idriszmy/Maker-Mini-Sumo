@@ -1,14 +1,12 @@
 const BAUD_RATE = 115200;
-const WEBUI_VERSION = "1.2.0";
-const NEW_PORT_VALUE = "new";
+const WEBUI_VERSION = "1.3.0";
 const COMMAND_TIMEOUT_MS = 2500;
 const BOARD_RESET_WAIT_MS = 2000;
 const HELLO_ATTEMPTS = 3;
 
 const elements = {
-  portSelect: document.querySelector("#portSelect"),
-  refreshButton: document.querySelector("#refreshButton"),
   connectButton: document.querySelector("#connectButton"),
+  portInfo: document.querySelector("#portInfo"),
   browserNotice: document.querySelector("#browserNotice"),
   connectionBadge: document.querySelector("#connectionBadge"),
   connectionText: document.querySelector("#connectionText"),
@@ -32,7 +30,6 @@ let sensorBusy = false;
 let editorBusy = false;
 let currentPage = "home";
 let pageLoad = 0;
-let approvedPorts = [];
 let activePort = null;
 let reader = null;
 let writer = null;
@@ -51,8 +48,7 @@ function setConnectionState(connected) {
   elements.connectionBadge.dataset.state = connected ? "online" : "offline";
   elements.connectionText.textContent = connected ? "Connected" : "Disconnected";
   elements.connectButton.textContent = connected || activePort ? "Disconnect" : "Connect";
-  elements.refreshButton.disabled = connected;
-  elements.portSelect.disabled = connected;
+  elements.portInfo.hidden = !connected;
   elements.forwardSlider.disabled = !connected;
   elements.backwardSlider.disabled = !connected;
   elements.rcMapping.disabled = !connected || !firmware?.rcMapping;
@@ -64,6 +60,7 @@ function setConnectionState(connected) {
   if (!connected) {
     document.querySelector("#sensorData").textContent = "No sensor data received.";
     document.querySelector("#firmwareInfo").textContent = "";
+    elements.portInfo.textContent = "";
   }
 
   if (!connected) {
@@ -83,49 +80,16 @@ function setSaveState(direction, message, state = "") {
   target.dataset.state = state;
 }
 
-function formatPort(port, index) {
+function formatPort(port) {
   const info = port.getInfo();
   const vendor = info.usbVendorId
     ? `VID ${info.usbVendorId.toString(16).toUpperCase().padStart(4, "0")}`
-    : "Serial";
+    : "VID unavailable";
   const product = info.usbProductId
     ? `PID ${info.usbProductId.toString(16).toUpperCase().padStart(4, "0")}`
-    : `Port ${index + 1}`;
+    : "PID unavailable";
 
   return `${vendor} · ${product}`;
-}
-
-async function refreshPorts(selectedPort = null) {
-  if (!("serial" in navigator)) {
-    return;
-  }
-
-  approvedPorts = await navigator.serial.getPorts();
-  elements.portSelect.replaceChildren();
-
-  approvedPorts.forEach((port, index) => {
-    const option = document.createElement("option");
-    option.value = String(index);
-    option.textContent = formatPort(port, index);
-    option.selected = port === selectedPort;
-    elements.portSelect.append(option);
-  });
-
-  const newPortOption = document.createElement("option");
-  newPortOption.value = NEW_PORT_VALUE;
-  newPortOption.textContent = "Select new port…";
-  newPortOption.selected = !selectedPort && approvedPorts.length === 0;
-  elements.portSelect.append(newPortOption);
-
-  if (!selectedPort && approvedPorts.length > 0) {
-    elements.portSelect.value = "0";
-  }
-
-  setSystemMessage(
-    approvedPorts.length > 0
-      ? `${approvedPorts.length} approved serial port${approvedPorts.length === 1 ? "" : "s"} found.`
-      : "No approved ports yet. Select a new port to continue.",
-  );
 }
 
 function updateMotorReadout(direction, rawValue) {
@@ -257,14 +221,7 @@ function sendCommand(command, matches = responseMatcher(command)) {
 }
 
 async function connect() {
-  let selectedPort;
-
-  if (elements.portSelect.value === NEW_PORT_VALUE) {
-    selectedPort = await navigator.serial.requestPort();
-    await refreshPorts(selectedPort);
-  } else {
-    selectedPort = approvedPorts[Number(elements.portSelect.value)];
-  }
+  const selectedPort = await navigator.serial.requestPort();
 
   if (!selectedPort) {
     throw new Error("no serial port selected");
@@ -302,7 +259,7 @@ async function connect() {
 
   const fields = Object.fromEntries(hello.split(" ").slice(1).map((part) => part.split("=")));
   if (fields.DEVICE !== "MAKER_MINI_SUMO" || ![undefined, "RC", "AutoRC"].includes(fields.FW) ||
-      (fields.FW === "AutoRC" && fields.PROTOCOL !== "4") ||
+      (fields.FW === "AutoRC" && fields.PROTOCOL !== "5") ||
       (fields.FW === "RC" && fields.PROTOCOL !== "2") ||
       (!fields.FW && fields.VERSION !== "1") || !fields.VERSION) throw new Error("unsupported firmware protocol");
   firmware = { type: fields.FW || "RC", version: fields.VERSION, sensor: !!fields.FW, rcMapping: !!fields.FW };
@@ -334,6 +291,7 @@ async function connect() {
   }
 
   ready = true;
+  elements.portInfo.textContent = formatPort(activePort);
   setConnectionState(true);
   setSystemMessage("Robot connected. Release a slider to save alignment.");
 }
@@ -400,14 +358,6 @@ async function saveSlider(direction) {
   }
 }
 
-elements.refreshButton.addEventListener("click", async () => {
-  try {
-    await refreshPorts();
-  } catch (error) {
-    setSystemMessage(`Unable to refresh ports: ${error.message}`);
-  }
-});
-
 elements.connectButton.addEventListener("click", async () => {
   elements.connectButton.disabled = true;
 
@@ -459,20 +409,12 @@ elements.rcMapping.addEventListener("change", async () => {
 
 if (!("serial" in navigator)) {
   elements.browserNotice.hidden = false;
-  elements.refreshButton.disabled = true;
   elements.connectButton.disabled = true;
   setSystemMessage("Web Serial is not supported in this browser.");
 } else {
-  navigator.serial.addEventListener("connect", () => refreshPorts());
   navigator.serial.addEventListener("disconnect", async (event) => {
-    if (event.target === activePort) {
-      await disconnect();
-    } else {
-      await refreshPorts();
-    }
+    if (event.target === activePort) await disconnect();
   });
-
-  refreshPorts();
 }
 
 setConnectionState(false);
@@ -483,7 +425,7 @@ function responseMatcher(command) {
   if (command === "HELLO") return line => line.startsWith("OK DEVICE=");
   if (command === "CONFIG ON") return line => line === "OK CONFIG";
   if (command === "GET CONFIG") return line => /^CONFIG F=-?\d+ B=-?\d+$/.test(line);
-  if (command === "GET SENSOR") return line => /^SENSOR( -?\d+(\.\d+)?){7}$/.test(line);
+  if (command === "GET SENSOR") return line => /^SENSOR( -?\d+(\.\d+)?){8}$/.test(line);
   if (command === "GET RC") return line => /^RC MAP=[01]$/.test(line);
   if (command.startsWith("GET ")) return line => line.startsWith(command.slice(4) + " ");
   if (/^SAVE [FB] /.test(command)) {
@@ -636,11 +578,14 @@ window.setInterval(async () => {
   try {
     const line = await sendCommand("GET SENSOR");
     if (!ready || currentPage !== "auto") return;
-    const [mask,left,right,start,dip,,battery] = line.slice(7).split(" ").map(Number);
+    const [mask,left,right,pot,start,dip,,battery] = line.slice(7).split(" ").map(Number);
+    const sensitivity = Math.floor(25 + pot * 50 / 1023);
     const target = document.querySelector("#sensorData"); target.replaceChildren();
     const rows = [
       ...["Left","Front left","Front centre","Front right","Right"].map((name,i) => [name, mask & (1<<i) ? "Detected" : "Clear"]),
-      ["Edge left",left], ["Edge right",right], ["START / IR D2",start ? "HIGH" : "LOW"],
+      ["Edge left raw ADC",left], ["Edge right raw ADC",right],
+      ["Sensitivity trim raw ADC",pot], ["IR sensitivity",`${sensitivity}%`],
+      ["START / IR D2",start ? "HIGH" : "LOW"],
       ["DIP",dip.toString(2).padStart(3,"0").replaceAll("0","L").replaceAll("1","H")],
       ["Battery",`${battery.toFixed(2)} V`],
     ];

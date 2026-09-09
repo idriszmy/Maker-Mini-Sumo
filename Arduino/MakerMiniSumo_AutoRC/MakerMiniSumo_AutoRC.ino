@@ -1,4 +1,4 @@
-// Maker Mini Sumo AutoRC 1.2.0. DIP 0-6 Auto, 7 RC. START/IR share D2.
+// Maker Mini Sumo AutoRC 1.3.0. DIP 0-6 Auto, 7 RC. START/IR share D2.
 #include <EEPROM.h>
 #include <avr/interrupt.h>
 #include "CytronMakerSumo.h"
@@ -420,14 +420,14 @@ bool parseValues(int16_t *values, uint8_t count) {
 }
 void handleCommand() {
   if (!strcmp(serialLine,"HELLO")) {
-    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.2.0 PROTOCOL=4")); return;
+    Serial.println(F("OK DEVICE=MAKER_MINI_SUMO FW=AutoRC VERSION=1.3.0 PROTOCOL=5")); return;
   }
   if (!strcmp(serialLine,"CONFIG ON")) {
     configSession = true; stopRobot(); Serial.println(F("OK CONFIG")); return;
   }
   if (!strcmp(serialLine,"GET SENSOR")) {
     Serial.print(F("SENSOR ")); Serial.print(opponents());
-    Serial.print(' '); Serial.print(analogRead(EDGE_L)); Serial.print(' '); Serial.print(analogRead(EDGE_R));
+    Serial.print(' '); Serial.print(analogRead(EDGE_L)); Serial.print(' '); Serial.print(analogRead(EDGE_R)); Serial.print(' '); Serial.print(analogRead(POT));
     Serial.print(' '); Serial.print(digitalRead(START)); Serial.print(' '); Serial.print(MakerSumo.readDipSwitch());
     Serial.print(' '); Serial.print(configSession ? 99 : state); Serial.print(' '); Serial.println(MakerSumo.readBatteryVoltage(),2); return;
   }
