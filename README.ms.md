@@ -23,8 +23,9 @@ keadaan idle sebelum menerima arahan mula.
 RC dan AutoRC 1.2.0 membolehkan WebUI 1.2.0 menyimpan sama ada GPIO1 throttle/
 GPIO2 steering atau assignment terbalik GPIO1 steering/GPIO2 throttle.
 
-AutoRC dan WebUI 1.3.0 memudahkan sambungan kepada satu button, memaparkan USB
-VID/PID, serta menambah raw ADC dan sensitiviti IR 25-75% pada live sensor.
+AutoRC dan WebUI 1.3.0 memudahkan sambungan kepada satu button serta menambah
+raw ADC dan sensitiviti IR 25-75% pada live sensor. WebUI 1.3.1 meletakkan versi
+firmware di sebelah button tersebut dan menambah Disconnect pada setiap halaman Auto.
 
 Button START dan IR berkongsi D2: lepaskan button / pastikan IR pada STOP ketika
 power-on atau reset. AutoRC mengunci motor sepanjang konfigurasi WebUI; simpan,

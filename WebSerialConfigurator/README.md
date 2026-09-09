@@ -18,10 +18,13 @@ and edge threshold are handled by firmware; live sensors omit internal state.
 WebUI 1.2.0 adds RC channel mapping on Main for RC/AutoRC 1.2.0. The default is
 GPIO1 throttle/GPIO2 steering; the alternate selection swaps those roles.
 
-WebUI 1.3.0 opens the browser's serial-port picker directly from Connect and
-shows the connected USB VID/PID beside the button. AutoRC 1.3.0 live sensors
+WebUI 1.3.0 opens the browser's serial-port picker directly from Connect. AutoRC 1.3.0 live sensors
 show raw edge ADC readings plus the potentiometer's raw ADC and 25-75% IR
 sensitivity.
+
+WebUI 1.3.1 shows the connected firmware version beside Connect/Disconnect,
+shortens the trim ADC label and provides Disconnect at the top right of every
+Auto page.
 
 The protocol, field ranges, EEPROM layout and verification status are maintained
 in [the project specification](../docs/PROJECT_PLAN.md#autorc-100--implementation-september-2026).

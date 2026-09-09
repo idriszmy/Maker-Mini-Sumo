@@ -1,12 +1,12 @@
 const BAUD_RATE = 115200;
-const WEBUI_VERSION = "1.3.0";
+const WEBUI_VERSION = "1.3.1";
 const COMMAND_TIMEOUT_MS = 2500;
 const BOARD_RESET_WAIT_MS = 2000;
 const HELLO_ATTEMPTS = 3;
 
 const elements = {
   connectButton: document.querySelector("#connectButton"),
-  portInfo: document.querySelector("#portInfo"),
+  pageDisconnectButton: document.querySelector("#pageDisconnectButton"),
   browserNotice: document.querySelector("#browserNotice"),
   connectionBadge: document.querySelector("#connectionBadge"),
   connectionText: document.querySelector("#connectionText"),
@@ -48,19 +48,18 @@ function setConnectionState(connected) {
   elements.connectionBadge.dataset.state = connected ? "online" : "offline";
   elements.connectionText.textContent = connected ? "Connected" : "Disconnected";
   elements.connectButton.textContent = connected || activePort ? "Disconnect" : "Connect";
-  elements.portInfo.hidden = !connected;
   elements.forwardSlider.disabled = !connected;
   elements.backwardSlider.disabled = !connected;
   elements.rcMapping.disabled = !connected || !firmware?.rcMapping;
   document.querySelector("#liveSensors").disabled = !connected || !firmware?.sensor;
   document.querySelector("#firmwareInfo").hidden = !connected;
+  document.querySelector("#pageActions").hidden = !connected || currentPage === "home";
   document.querySelector("#sessionHelp").hidden = !connected;
   document.querySelector("#sensorPanel").hidden = !connected || currentPage !== "auto";
   renderNav();
   if (!connected) {
     document.querySelector("#sensorData").textContent = "No sensor data received.";
     document.querySelector("#firmwareInfo").textContent = "";
-    elements.portInfo.textContent = "";
   }
 
   if (!connected) {
@@ -78,18 +77,6 @@ function setSaveState(direction, message, state = "") {
 
   target.textContent = message;
   target.dataset.state = state;
-}
-
-function formatPort(port) {
-  const info = port.getInfo();
-  const vendor = info.usbVendorId
-    ? `VID ${info.usbVendorId.toString(16).toUpperCase().padStart(4, "0")}`
-    : "VID unavailable";
-  const product = info.usbProductId
-    ? `PID ${info.usbProductId.toString(16).toUpperCase().padStart(4, "0")}`
-    : "PID unavailable";
-
-  return `${vendor} · ${product}`;
 }
 
 function updateMotorReadout(direction, rawValue) {
@@ -291,7 +278,6 @@ async function connect() {
   }
 
   ready = true;
-  elements.portInfo.textContent = formatPort(activePort);
   setConnectionState(true);
   setSystemMessage("Robot connected. Release a slider to save alignment.");
 }
@@ -373,6 +359,13 @@ elements.connectButton.addEventListener("click", async () => {
   } finally {
     elements.connectButton.disabled = false;
   }
+});
+
+elements.pageDisconnectButton.addEventListener("click", async () => {
+  elements.pageDisconnectButton.disabled = true;
+  try { await disconnect(); }
+  catch (error) { setSystemMessage(`Unable to disconnect: ${error.message}`); }
+  finally { elements.pageDisconnectButton.disabled = false; }
 });
 
 elements.forwardSlider.addEventListener("input", (event) => {
@@ -488,6 +481,7 @@ async function showPage(page) {
   const editor = document.querySelector("#editorPage");
   const load = ++pageLoad;
   currentPage = page; renderNav();
+  document.querySelector("#pageActions").hidden = page === "home" || !ready;
   home.hidden = page !== "home"; editor.hidden = page === "home";
   document.querySelector("#sensorPanel").hidden = page !== "auto" || !ready;
   if (page === "home") return;
@@ -584,7 +578,7 @@ window.setInterval(async () => {
     const rows = [
       ...["Left","Front left","Front centre","Front right","Right"].map((name,i) => [name, mask & (1<<i) ? "Detected" : "Clear"]),
       ["Edge left raw ADC",left], ["Edge right raw ADC",right],
-      ["Sensitivity trim raw ADC",pot], ["IR sensitivity",`${sensitivity}%`],
+      ["Trim raw ADC",pot], ["IR sensitivity",`${sensitivity}%`],
       ["START / IR D2",start ? "HIGH" : "LOW"],
       ["DIP",dip.toString(2).padStart(3,"0").replaceAll("0","L").replaceAll("1","H")],
       ["Battery",`${battery.toFixed(2)} V`],

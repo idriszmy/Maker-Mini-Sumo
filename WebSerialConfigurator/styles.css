@@ -179,11 +179,17 @@ h3 {
   gap: 10px;
 }
 
-.port-info {
+.firmware-info {
   color: var(--accent);
   font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0.04em;
+}
+
+.page-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: -4px 0 18px;
 }
 
 select,

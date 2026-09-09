@@ -148,7 +148,7 @@ dengan alamat `0-3` yang digunakan oleh CytronMakerSumo untuk edge sensor.
 WebUI menyediakan:
 
 - Satu button `Connect` / `Disconnect`; `Connect` membuka browser device chooser.
-- USB VID dan PID dipaparkan di sebelah button selepas sambungan berjaya.
+- Versi firmware dipaparkan di sebelah button selepas sambungan berjaya.
 - Connection state dan mesej error yang mudah difahami.
 
 Selepas sambungan berjaya:
@@ -458,7 +458,9 @@ firmware is updated. Both current firmware builds compile for Arduino Uno.
 ### AutoRC 1.3.0 / WebUI 1.3.0 — connection and sensitivity telemetry
 
 Main opens the browser serial-port chooser directly from the Connect button.
-After a successful connection, the selected port's USB VID and PID appear beside
-Connect/Disconnect. Live sensors add the potentiometer raw ADC reading. WebUI
+Live sensors add the potentiometer raw ADC reading. WebUI
 uses the same integer conversion as firmware, mapping ADC 0-1023 to IR edge
 sensitivity 25-75%.
+
+WebUI 1.3.1 displays the connected firmware version beside Connect/Disconnect.
+Every Auto page also provides a Disconnect button at its top right.

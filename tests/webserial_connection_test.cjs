@@ -14,7 +14,7 @@ const prefix=fs.readFileSync('tests/webui_test.cjs','utf8').split('const nodes={
  } else {
   await vm.runInContext('connect()',context);
   assert.equal(vm.runInContext('ready',context),true);
-  assert.equal(vm.runInContext('elements.portInfo.textContent',context),'VID 1A86 · PID 7523');
+  assert.equal(vm.runInContext('document.querySelector("#firmwareInfo").textContent',context),`MakerMiniSumo_${hello.includes('FW=AutoRC')?'AutoRC':'RC'} · Version ${hello.match(/VERSION=([^ ]+)/)[1]}`);
   assert.equal(helloCount,dropped+1);
   assert.equal(commands.filter(c=>c==='GET CONFIG').length,1);
  }
