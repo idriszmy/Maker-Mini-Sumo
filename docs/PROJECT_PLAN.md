@@ -464,3 +464,4 @@ sensitivity 25-75%.
 
 WebUI 1.3.1 displays the connected firmware version beside Connect/Disconnect.
 Every Auto page also provides a Disconnect button at its top right.
+WebUI 1.3.2 moves this control into the top-right corner of the page panel.

@@ -1,5 +1,5 @@
 const BAUD_RATE = 115200;
-const WEBUI_VERSION = "1.3.1";
+const WEBUI_VERSION = "1.3.2";
 const COMMAND_TIMEOUT_MS = 2500;
 const BOARD_RESET_WAIT_MS = 2000;
 const HELLO_ATTEMPTS = 3;
@@ -53,7 +53,6 @@ function setConnectionState(connected) {
   elements.rcMapping.disabled = !connected || !firmware?.rcMapping;
   document.querySelector("#liveSensors").disabled = !connected || !firmware?.sensor;
   document.querySelector("#firmwareInfo").hidden = !connected;
-  document.querySelector("#pageActions").hidden = !connected || currentPage === "home";
   document.querySelector("#sessionHelp").hidden = !connected;
   document.querySelector("#sensorPanel").hidden = !connected || currentPage !== "auto";
   renderNav();
@@ -478,11 +477,11 @@ function numberField(label, value, min, max) {
 async function showPage(page) {
   if (editorBusy) return;
   const home = document.querySelector("#homePage");
-  const editor = document.querySelector("#editorPage");
+  const editorPage = document.querySelector("#editorPage");
+  const editor = document.querySelector("#editorContent");
   const load = ++pageLoad;
   currentPage = page; renderNav();
-  document.querySelector("#pageActions").hidden = page === "home" || !ready;
-  home.hidden = page !== "home"; editor.hidden = page === "home";
+  home.hidden = page !== "home"; editorPage.hidden = page === "home";
   document.querySelector("#sensorPanel").hidden = page !== "auto" || !ready;
   if (page === "home") return;
   editor.textContent = "Reading saved settings…";

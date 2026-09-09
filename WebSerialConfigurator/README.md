@@ -26,6 +26,8 @@ WebUI 1.3.1 shows the connected firmware version beside Connect/Disconnect,
 shortens the trim ADC label and provides Disconnect at the top right of every
 Auto page.
 
+WebUI 1.3.2 places that Disconnect control inside each Auto/Strategy panel.
+
 The protocol, field ranges, EEPROM layout and verification status are maintained
 in [the project specification](../docs/PROJECT_PLAN.md#autorc-100--implementation-september-2026).
 
